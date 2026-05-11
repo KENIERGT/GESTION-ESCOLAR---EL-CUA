@@ -14,11 +14,66 @@
         <h1>División de Estadísticas Educativas - El Cua</h1>
         <div class="menu-botones">
             <button class="btn-menu" onclick="mostrarSeccion('Retiros')">
-                <span class="icon"></span> RETIROS
+                RETIROS
             </button>
             <button class="btn-menu" onclick="mostrarSeccion('Reprobados')">
-                <span class="icon"></span> REPROBADOS
+                REPROBADOS
             </button>
+            <button class="btn-menu" onclick="mostrarSeccion('Reportes')">
+                CONSULTAR REPORTES
+            </button>
+        </div>
+    </div>
+
+    <div id="seccionReportes" class="container d-none">
+        <button class="btn-regresar" onclick="irAlMenu()">⬅ Volver al Menú</button>
+        <div class="card">
+            <h2>Consulta de Registros</h2>
+            
+            <div class="campo">
+                <label>1. Seleccione el Núcleo:</label>
+                <select id="filtroNucleo">
+                    <option value="">-- Todos los Núcleos --</option>
+                    <option value="14 DE SEPTIEMBRE">14 DE SEPTIEMBRE</option>
+                    <option value="15 DE SEPTIEMBRE">15 DE SEPTIEMBRE</option>
+                    <option value="ANDRES CASTRO #1">ANDRES CASTRO #1</option>
+                    <option value="CAMILO ZAPATA">CAMILO ZAPATA</option>
+                    <option value="CARLOS VALDIVIA">CARLOS VALDIVIA</option>
+                    <option value="CLEOTILDE GUILLEN">CLEOTILDE GUILLEN</option>
+                    <option value="EL DESTINO">EL DESTINO</option>
+                    <option value="ESTRELLA DE BELEN">ESTRELLA DE BELEN</option>
+                    <option value="ESTRELLITA DE ORIENTE">ESTRELLITA DE ORIENTE</option>
+                    <option value="GEORGINO ANDRADE">GEORGINO ANDRADE</option>
+                    <option value="JOSE ADAN VASQUEZ">JOSE ADAN VASQUEZ</option>
+                    <option value="LAS PROFESIAS">LAS PROFESIAS</option>
+                    <option value="LUIS ALBERTO CABRALES">LUIS ALBERTO CABRALES</option>
+                    <option value="LUIS ALFONSO HERNANDEZ">LUIS ALFONSO HERNANDEZ</option>
+                    <option value="LUIS ALFONSO VELASQUEZ FLORES">LUIS ALFONSO VELASQUEZ FLORES</option>
+                    <option value="MANOLO CUADRA">MANOLO CUADRA</option>
+                    <option value="NUEVA ALIANZA">NUEVA ALIANZA</option>
+                    <option value="PEDRO LUMBI">PEDRO LUMBI</option>
+                    <option value="PEÑAS BLANCAS">PEÑAS BLANCAS</option>
+                    <option value="RICARDO MORALES AVILES">RICARDO MORALES AVILES</option>
+                    <option value="ROGER ARTETA">ROGER ARTETA</option>
+                    <option value="ROSA MONTOYA FLORES">ROSA MONTOYA FLORES</option>
+                    <option value="RUBEN DARIO">RUBEN DARIO</option>
+                    <option value="SALOMON DE LA SELVA">SALOMON DE LA SELVA</option>
+                    <option value="SALOMON IBARRA MAYORGA">SALOMON IBARRA MAYORGA</option>
+                    <option value="SENDERO DE LUZ">SENDERO DE LUZ</option>
+                </select>
+            </div>
+
+            <div class="campo">
+                <label>2. Tipo de Reporte:</label>
+                <select id="filtroTipo">
+                    <option value="Retiros">Retiros</option>
+                    <option value="Reprobados">Reprobados</option>
+                </select>
+            </div>
+
+            <button class="btn-enviar" onclick="consultarDatos()">Buscar Registros</button>
+
+            <div id="tablaResultados" class="tabla-container" style="margin-top: 20px;"></div>
         </div>
     </div>
 
@@ -91,13 +146,14 @@
 
         <div class="campo">
             <label>Seleccione las asignaturas:</label>
-            <div id="contenedorAsignaturas" class="grid-asignaturas">
-                </div>
-            <input type="hidden" id="materiaReprobado"> <div id="avisoLimite" style="color: #b91c1c; font-size: 0.8em; margin-top: 5px;"></div>
+            <div id="contenedorAsignaturas" class="grid-asignaturas"></div>
+            <input type="hidden" id="materiaReprobado"> 
+            <div id="avisoLimite" style="color: #b91c1c; font-size: 0.8em; margin-top: 5px;"></div>
         </div>
 
-    <button id="btnReprobado" class="btn-enviar" disabled onclick="enviar('Reprobado')">Guardar Reprobado</button>
-</div>
+        <button id="btnReprobado" class="btn-enviar" disabled onclick="enviar('Reprobado')">Guardar Reprobado</button>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

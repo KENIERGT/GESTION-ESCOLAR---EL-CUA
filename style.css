@@ -163,3 +163,21 @@ input, select {
     font-size: 0.9rem;
     text-decoration: underline;
 }
+
+/*NUEVO: ESTILOS PARA INFORMES*/
+
+.tabla-container table {
+    width: 100%;
+    margin-top: 15px;
+}
+
+.tabla-container th, .tabla-container td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.tabla-container th {
+    background-color: var(--primary-blue);
+    color: white;
+}
