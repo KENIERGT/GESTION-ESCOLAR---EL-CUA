@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RETIROS Y REPROBADOS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="loader">Cargando ......</div>
+
+    <div id="menuPrincipal" class="container text-center">
+        <h1>División de Estadísticas Educativas - El Cua</h1>
+        <div class="menu-botones">
+            <button class="btn-menu" onclick="mostrarSeccion('Retiros')">
+                <span class="icon"></span> RETIROS
+            </button>
+            <button class="btn-menu" onclick="mostrarSeccion('Reprobados')">
+                <span class="icon"></span> REPROBADOS
+            </button>
+        </div>
+    </div>
+
+    <div id="seccionRetiros" class="container d-none">
+        <button class="btn-regresar" onclick="irAlMenu()">⬅ Volver al Menú</button>
+        <h2>Formulario de Retiros</h2>
+        
+        <div class="campo">
+            <label>Código Único de Persona:</label>
+            <input type="text" id="codRetiro" placeholder="Ingrese código..." oninput="validar('Retiro')">
+            <div id="infoRetiro" class="info-caja"></div>
+        </div>
+
+        <div class="campo">
+            <label>Causa del Retiro:</label>
+            <select id="causaRetiro" onchange="validar('Retiro')">
+                <option value="">-- Seleccione causa --</option>
+                <option value="NUNCA ASISTIO A CLASES">NUNCA ASISTIO A CLASES</option>
+                <option value="FALTA DE APOYO DE LOS PADRES">FALTA DE APOYO DE LOS PADRES</option>
+                <option value="RELACION SENTIMENTAL">RELACION SENTIMENTAL</option>
+                <option value="EMBARAZO">EMBARAZO</option>
+                <option value="DISPERSION GEOGRAFICA">DISPERSION GEOGRAFICA</option>
+                <option value="FALLECIDO">FALLECIDO</option>
+                <option value="TRABAJO">TRABAJO</option>
+                <option value="DIFICULTADES ECONOMICAS">DIFICULTADES ECONOMICAS</option>
+                <option value="CAMBIO DE DOMICILIO">CAMBIO DE DOMICILIO</option>
+                <option value="MIGRACION A OTRO PAIS">MIGRACION A OTRO PAIS</option>
+                <option value="ACCIDENTE">ACCIDENTE</option>
+                <option value="BULYNG">BULYNG</option>
+                <option value="QUEHACERES DEL HOGAR">QUEHACERES DEL HOGAR</option>
+                <option value="MALA CONDUCTA">MALA CONDUCTA</option>
+                <option value="BAJO RENDIMIENTO ESCOLAR">BAJO RENDIMIENTO ESCOLAR</option>
+                <option value="LIMITACIONES FISICAS O INTELECTUALES">LIMITACIONES FISICAS O INTELECTUALES</option>
+                <option value="MAL DESEMPEÑO DEL DOCENTE">MAL DESEMPEÑO DEL DOCENTE</option>
+                <option value="PROBLEMAS DE SALUD">PROBLEMAS DE SALUD</option>
+                <option value="POBRES CONDICIONES DE LA ESCUELA">POBRES CONDICIONES DE LA ESCUELA</option>
+                <option value="RIESGO ASOCIADOS A VIOLENCIA EN EL SECTOR">RIESGO ASOCIADOS A VIOLENCIA EN EL SECTOR</option>
+                <option value="REPROBÓ">REPROBÓ</option>
+                <option value="FINALIZÓ">FINALIZÓ</option>
+            </select>
+        </div>
+
+        <div class="campo">
+            <label>Fecha de Retiro:</label>
+            <input type="date" id="fechaRetiro" min="2026-01-01" max="2026-12-31" onchange="validar('Retiro')">
+        </div>
+
+        <button id="btnRetiro" class="btn-enviar" disabled onclick="enviar('Retiro')">Guardar Retiro</button>
+    </div>
+
+    <div id="seccionReprobados" class="container d-none">
+        <button class="btn-regresar" onclick="irAlMenu()">⬅ Volver al Menú</button>
+        <h2>Formulario de Reprobados</h2>
+
+        <div class="campo">
+            <label>Código Único de Persona:</label>
+            <input type="text" id="codReprobado" placeholder="Ingrese código..." oninput="validar('Reprobado')">
+            <div id="infoReprobado" class="info-caja"></div>
+        </div>
+
+        <div class="campo">
+            <label>¿Cuántas asignaturas reprobó?</label>
+            <select id="cantReprobado" onchange="gestionarAsignaturas()">
+                <option value="">-- Seleccione cantidad --</option>
+                <option value="1">1 asignatura</option>
+                <option value="2">2 asignaturas</option>
+                <option value="3 o más">3 o más asignaturas</option>
+            </select>
+        </div>
+
+        <div class="campo">
+            <label>Seleccione las asignaturas:</label>
+            <div id="contenedorAsignaturas" class="grid-asignaturas">
+                </div>
+            <input type="hidden" id="materiaReprobado"> <div id="avisoLimite" style="color: #b91c1c; font-size: 0.8em; margin-top: 5px;"></div>
+        </div>
+
+    <button id="btnReprobado" class="btn-enviar" disabled onclick="enviar('Reprobado')">Guardar Reprobado</button>
+</div>
+    <script src="script.js"></script>
+</body>
+</html>

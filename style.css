@@ -1,0 +1,165 @@
+/* =========================================
+   VARIABLES Y CONFIGURACIÓN BASE
+   ========================================= */
+:root {
+    --primary-blue: #000000; /* Color principal */
+    --success-green: #28c41d; /* Color para acciones positivas */
+    --danger-red: #b91c1c;   /* Para errores o avisos */
+    --bg-body: #e5e7eb;      /* Fondo de la página */
+    --bg-card: #ffffff;      /* Fondo de contenedores */
+    --text-gray: #f3f4f6;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-body);
+    padding: 20px;
+    margin: 0;
+}
+
+/* =========================================
+   CONTENEDORES Y UTILIDADES
+   ========================================= */
+.container {
+    max-width: 600px;
+    background: var(--bg-card);
+    padding: 25px;
+    border-radius: 12px;
+    margin: 0 auto 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.d-none { display: none; }
+.text-center { text-align: center; }
+
+#loader {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: var(--primary-blue);
+}
+
+/* =========================================
+   MENÚ PRINCIPAL
+   ========================================= */
+.menu-botones {
+    display: grid;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn-menu {
+    padding: 30px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    background: var(--primary-blue);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-menu:hover {
+    background: #1e40af;
+    transform: scale(1.02);
+}
+
+/* =========================================
+   FORMULARIOS (INPUTS Y SELECTS)
+   ========================================= */
+.campo { margin-bottom: 15px; }
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #374151;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box; /* Evita que el padding ensanche el input */
+}
+
+/* Caja de información del estudiante (Padre/Padrón) */
+.info-caja {
+    background: #dcfce7;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: none;
+    font-size: 14px;
+    border-left: 5px solid var(--success-green);
+}
+
+/* =========================================
+   SISTEMA DE ASIGNATURAS (CHIPS)
+   ========================================= */
+.grid-asignaturas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.materia-chip {
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-align: center;
+    background: #f9fafb;
+    transition: background 0.2s, color 0.2s;
+    user-select: none; /* Evita seleccionar texto al hacer clic rápido */
+}
+
+.materia-chip:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.materia-chip.seleccionada {
+    background: #2563eb;
+    color: white;
+    border-color: #1e40af;
+    font-weight: 500;
+}
+
+/* =========================================
+   BOTONES DE ACCIÓN
+   ========================================= */
+.btn-enviar {
+    width: 100%;
+    padding: 15px;
+    background: var(--success-green);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.3s;
+}
+
+.btn-enviar:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.btn-regresar {
+    background: none;
+    border: none;
+    color: var(--primary-blue);
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 20px;
+    padding: 0;
+    font-size: 0.9rem;
+    text-decoration: underline;
+}
