@@ -132,15 +132,24 @@ function mostrarSeccion(tipo) {
     document.getElementById('seccionRetiros').classList.add('d-none');
     document.getElementById('seccionReprobados').classList.add('d-none');
     document.getElementById('seccionReportes').classList.add('d-none');
+    document.getElementById('seccionEstadisticas').classList.add('d-none');
 
     document.getElementById('seccion' + tipo).classList.remove('d-none');
+
+    if (tipo === 'Estadisticas') {
+        iniciarActualizacionEstadisticas();
+    } else {
+        detenerActualizacionEstadisticas();
+    }
 }
 
 function irAlMenu() {
     document.getElementById('seccionRetiros').classList.add('d-none');
     document.getElementById('seccionReprobados').classList.add('d-none');
     document.getElementById('seccionReportes').classList.add('d-none');
+    document.getElementById('seccionEstadisticas').classList.add('d-none');
     document.getElementById('menuPrincipal').classList.remove('d-none');
+    detenerActualizacionEstadisticas();
 }
 
 /* ============================================================
@@ -364,6 +373,75 @@ function consultarDatos() {
         .catch(() => {
             contenedor.innerHTML = "<p class='mensaje-vacio'>❌ Error al conectar con el servidor.</p>";
         });
+}
+
+/* ============================================================
+   8. ESTADÍSTICAS POR NÚCLEO (gráfico de barras, se auto-actualiza)
+   ============================================================ */
+let intervaloEstadisticas = null;
+
+function iniciarActualizacionEstadisticas() {
+    cargarEstadisticas();
+    intervaloEstadisticas = setInterval(cargarEstadisticas, 15000);
+}
+
+function detenerActualizacionEstadisticas() {
+    if (intervaloEstadisticas) {
+        clearInterval(intervaloEstadisticas);
+        intervaloEstadisticas = null;
+    }
+}
+
+function cargarEstadisticas() {
+    fetch(`${urlSheet}?accion=estadisticas`)
+        .then(res => res.json())
+        .then(datos => _renderEstadisticas(datos))
+        .catch(() => {
+            document.getElementById('graficoNucleos').innerHTML = "<p class='mensaje-vacio'>❌ No se pudieron cargar las estadísticas.</p>";
+        });
+}
+
+function _renderEstadisticas(datos) {
+    const retiros = (datos && datos.retiros) || {};
+    const reprobados = (datos && datos.reprobados) || {};
+
+    const totalRetiros = Object.values(retiros).reduce((a, b) => a + b, 0);
+    const totalReprobados = Object.values(reprobados).reduce((a, b) => a + b, 0);
+    document.getElementById('totalRetiros').innerText = totalRetiros;
+    document.getElementById('totalReprobados').innerText = totalReprobados;
+
+    const nucleos = Array.from(new Set([...Object.keys(retiros), ...Object.keys(reprobados)]));
+    nucleos.sort((a, b) => ((reprobados[b] || 0) + (retiros[b] || 0)) - ((reprobados[a] || 0) + (retiros[a] || 0)));
+
+    const contenedor = document.getElementById('graficoNucleos');
+
+    if (nucleos.length === 0) {
+        contenedor.innerHTML = "<p class='mensaje-vacio'>Aún no hay registros.</p>";
+        return;
+    }
+
+    const max = Math.max(1, ...nucleos.map(n => Math.max(retiros[n] || 0, reprobados[n] || 0)));
+
+    contenedor.innerHTML = nucleos.map(n => {
+        const r = retiros[n] || 0;
+        const p = reprobados[n] || 0;
+        const anchoR = (r / max * 100).toFixed(1);
+        const anchoP = (p / max * 100).toFixed(1);
+        return `
+            <div class="fila-nucleo">
+                <div class="fila-nucleo-nombre">${n}</div>
+                <div class="fila-nucleo-barras">
+                    <div class="barra-track">
+                        <div class="barra-fill barra-retiro" style="width:${anchoR}%"></div>
+                        <span class="barra-valor">${r}</span>
+                    </div>
+                    <div class="barra-track">
+                        <div class="barra-fill barra-reprobado" style="width:${anchoP}%"></div>
+                        <span class="barra-valor">${p}</span>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
 }
 
 function _nombreDesdeFila(fila, codigoPersona) {
