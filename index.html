@@ -63,6 +63,10 @@
                 <span class="btn-menu-icono">▤</span>
                 <span>CONSULTAR REPORTES</span>
             </button>
+            <button class="btn-menu btn-menu-estadisticas" onclick="mostrarSeccion('Estadisticas')">
+                <span class="btn-menu-icono">📊</span>
+                <span>ESTADÍSTICAS</span>
+            </button>
         </div>
     </div>
 
@@ -121,6 +125,33 @@
             <button class="btn-enviar" onclick="consultarDatos()">Buscar Registros</button>
 
             <div id="tablaResultados" class="tabla-container"></div>
+        </div>
+    </div>
+
+    <!-- ============ ESTADÍSTICAS ============ -->
+    <div id="seccionEstadisticas" class="container d-none">
+        <button class="btn-regresar" onclick="irAlMenu()">⬅ Volver al Menú</button>
+        <div class="card">
+            <h2>Estadísticas por Núcleo</h2>
+            <p class="subtexto">Se actualiza automáticamente cada 15 segundos.</p>
+
+            <div class="stats-totales">
+                <div class="stat-card stat-retiro">
+                    <div class="stat-numero" id="totalRetiros">0</div>
+                    <div class="stat-etiqueta">Retiros</div>
+                </div>
+                <div class="stat-card stat-reprobado">
+                    <div class="stat-numero" id="totalReprobados">0</div>
+                    <div class="stat-etiqueta">Reprobados</div>
+                </div>
+            </div>
+
+            <div class="leyenda-grafico">
+                <span><i class="punto punto-retiro"></i> Retiros</span>
+                <span><i class="punto punto-reprobado"></i> Reprobados</span>
+            </div>
+
+            <div id="graficoNucleos" class="grafico-nucleos"></div>
         </div>
     </div>
 
