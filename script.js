@@ -1,7 +1,73 @@
 let mapaEstudiantes = new Map();
 const urlSheet = "https://script.google.com/macros/s/AKfycbxFvEVlvjofegI2P6PbfE9tDYWd4z9yVgW9JQvpXXkPK6evKo4iyeM3XddLAJd5a8DY/exec";
 
-// 1. CARGA DEL CSV (Solo Código y Nombre)
+/* ============================================================
+   0. FLUJO DE USUARIO (sin login, guardado en el dispositivo)
+   ============================================================ */
+function obtenerUsuario() {
+    return localStorage.getItem('eec_usuarioNombre') || "";
+}
+
+function iniciarFlujoUsuario() {
+    const nombre = obtenerUsuario();
+
+    // Copiamos las opciones de núcleo del filtro de reportes al selector de bienvenida
+    const origen = document.getElementById('filtroNucleo');
+    const destino = document.getElementById('nucleoUsuario');
+    Array.from(origen.options).slice(1).forEach(opt => {
+        destino.appendChild(opt.cloneNode(true));
+    });
+
+    if (nombre) {
+        mostrarBarraUsuario(nombre);
+        document.getElementById('menuPrincipal').classList.remove('d-none');
+    } else {
+        document.getElementById('pantallaBienvenida').classList.remove('d-none');
+    }
+}
+
+function mostrarBarraUsuario(nombre) {
+    document.getElementById('barraUsuario').classList.remove('d-none');
+    document.getElementById('nombreMostrado').innerText = '👤 ' + nombre;
+}
+
+function guardarUsuario() {
+    const nombre = document.getElementById('nombreUsuario').value.trim();
+    if (!nombre) {
+        mostrarToast('Por favor escribe tu nombre', true);
+        return;
+    }
+    const nucleo = document.getElementById('nucleoUsuario').value;
+    localStorage.setItem('eec_usuarioNombre', nombre);
+    if (nucleo) localStorage.setItem('eec_usuarioNucleo', nucleo);
+
+    document.getElementById('pantallaBienvenida').classList.add('d-none');
+    mostrarBarraUsuario(nombre);
+    document.getElementById('menuPrincipal').classList.remove('d-none');
+}
+
+function cambiarUsuario() {
+    localStorage.removeItem('eec_usuarioNombre');
+    localStorage.removeItem('eec_usuarioNucleo');
+    location.reload();
+}
+
+/* ============================================================
+   1. TOASTS (reemplazan los alert() para que se sienta más rápido)
+   ============================================================ */
+let toastTimeout;
+function mostrarToast(mensaje, esError) {
+    const toast = document.getElementById('toast');
+    toast.innerText = mensaje;
+    toast.classList.toggle('error', !!esError);
+    toast.classList.add('mostrar');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => toast.classList.remove('mostrar'), 3200);
+}
+
+/* ============================================================
+   2. CARGA DEL CSV (Código y Nombre, para autocompletar en el formulario)
+   ============================================================ */
 fetch('estudiantes.csv')
     .then(res => res.text())
     .then(csv => {
@@ -11,8 +77,7 @@ fetch('estudiantes.csv')
 
         let separador = contenido.includes(';') ? ';' : ',';
         const encabezados = filas[0].split(separador).map(h => h.trim());
-        
-        // Buscamos los índices de forma flexible
+
         const idxCodigo = encabezados.findIndex(h => h.toLowerCase().includes("cod"));
         const idxNombre = encabezados.findIndex(h => h.toLowerCase().includes("nombre"));
 
@@ -24,21 +89,50 @@ fetch('estudiantes.csv')
             if (col[idxCodigo]) {
                 const cod = col[idxCodigo].trim().toUpperCase();
                 const nom = col[idxNombre] ? col[idxNombre].trim() : "SIN NOMBRE";
-                // Guardamos el código como llave y el nombre como valor
                 mapaEstudiantes.set(cod, nom);
             }
         }
-        document.getElementById('loader').innerHTML = "✅ Base Lista";
-        setTimeout(() => document.getElementById('loader').style.display = 'none', 1000);
+        document.getElementById('loader').innerHTML = "✅ Base lista (" + mapaEstudiantes.size.toLocaleString('es-NI') + " estudiantes)";
+        setTimeout(() => document.getElementById('loader').style.display = 'none', 900);
+        iniciarFlujoUsuario();
+        cargarCodigosExistentes();
+    })
+    .catch(() => {
+        document.getElementById('loader').innerHTML = "⚠️ No se pudo cargar estudiantes.csv";
+        iniciarFlujoUsuario();
+        cargarCodigosExistentes();
     });
 
-// 2. NAVEGACIÓN
+/* ============================================================
+   2.1 CÓDIGOS YA REGISTRADOS (para bloquear duplicados por categoría)
+   ============================================================ */
+const codigosExistentes = { Retiro: new Set(), Reprobado: new Set() };
+
+function cargarCodigosExistentes() {
+    fetch(`${urlSheet}?accion=codigos&tipo=Retiros`)
+        .then(res => res.json())
+        .then(lista => {
+            if (Array.isArray(lista)) lista.forEach(c => codigosExistentes.Retiro.add(c));
+        })
+        .catch(() => {});
+
+    fetch(`${urlSheet}?accion=codigos&tipo=Reprobados`)
+        .then(res => res.json())
+        .then(lista => {
+            if (Array.isArray(lista)) lista.forEach(c => codigosExistentes.Reprobado.add(c));
+        })
+        .catch(() => {});
+}
+
+/* ============================================================
+   3. NAVEGACIÓN
+   ============================================================ */
 function mostrarSeccion(tipo) {
     document.getElementById('menuPrincipal').classList.add('d-none');
     document.getElementById('seccionRetiros').classList.add('d-none');
     document.getElementById('seccionReprobados').classList.add('d-none');
     document.getElementById('seccionReportes').classList.add('d-none');
-    
+
     document.getElementById('seccion' + tipo).classList.remove('d-none');
 }
 
@@ -49,9 +143,16 @@ function irAlMenu() {
     document.getElementById('menuPrincipal').classList.remove('d-none');
 }
 
-// 3. VALIDACIÓN CORREGIDA
+/* ============================================================
+   4. VALIDACIÓN (con pequeño debounce para no recalcular de más)
+   ============================================================ */
+let debounceValidar;
 function validar(tipo) {
-    // Nota: 'tipo' viene como 'Retiro' o 'Reprobado' desde el HTML
+    clearTimeout(debounceValidar);
+    debounceValidar = setTimeout(() => _validarAhora(tipo), 120);
+}
+
+function _validarAhora(tipo) {
     const codInput = document.getElementById('cod' + tipo);
     const cod = codInput.value.trim().toUpperCase();
     const info = document.getElementById('info' + tipo);
@@ -59,11 +160,20 @@ function validar(tipo) {
 
     if (mapaEstudiantes.has(cod)) {
         const nombreEstudiante = mapaEstudiantes.get(cod);
+
+        // Bloqueo de duplicados: mismo código, misma categoría (Retiro o Reprobado)
+        if (codigosExistentes[tipo].has(cod)) {
+            info.style.display = 'block';
+            info.style.color = "#B5482F";
+            info.innerHTML = `<strong>Estudiante:</strong> ${nombreEstudiante}<br>⚠️ Este código ya tiene un registro de ${tipo === 'Retiro' ? 'Retiro' : 'Reprobado'}. No se puede repetir.`;
+            btn.disabled = true;
+            return;
+        }
+
         info.style.display = 'block';
-        info.style.color = "#15803d"; 
-        // CORRECCIÓN: Acceso directo al nombre
+        info.style.color = "#1F3A34";
         info.innerHTML = `<strong>Estudiante:</strong> ${nombreEstudiante}`;
-        
+
         let fechaValida = false;
 
         if (tipo === 'Retiro') {
@@ -73,26 +183,27 @@ function validar(tipo) {
                 if (fechaSeleccionada.getFullYear() === 2026) {
                     fechaValida = true;
                 } else {
-                    info.innerHTML += "<br><span style='color:red'>⚠️ El retiro debe ser del año 2026</span>";
+                    info.innerHTML += "<br><span style='color:#B5482F'>⚠️ El retiro debe ser del año 2026</span>";
                 }
             }
             const cVal = document.getElementById('causaRetiro').value;
             btn.disabled = !(cVal && fechaValida);
         } else {
-            // Validación para reprobados
             const nVal = document.getElementById('cantReprobado').value;
             const mVal = document.getElementById('materiaReprobado').value.trim();
             btn.disabled = !(nVal && mVal);
         }
     } else {
         info.style.display = 'block';
-        info.style.color = "#b91c1c";
+        info.style.color = "#B5482F";
         info.innerHTML = cod === "" ? "" : "❌ Código no encontrado";
         btn.disabled = true;
     }
 }
 
-// 4. ENVÍO
+/* ============================================================
+   5. ENVÍO (optimizado: sin 'no-cors', para saber si de verdad se guardó)
+   ============================================================ */
 function enviar(tipo) {
     const btn = document.getElementById('btn' + tipo);
     const cod = document.getElementById('cod' + tipo).value.trim().toUpperCase();
@@ -100,12 +211,14 @@ function enviar(tipo) {
     const fechaSistema = new Date().toLocaleString('es-NI');
 
     btn.disabled = true;
-    btn.innerText = "Enviando...";
+    const textoOriginal = btn.innerText;
+    btn.innerText = "Guardando...";
 
     let payload = {
         "CodUnico": cod,
         "Nombre": nombre,
-        "FechaEntrega": fechaSistema
+        "FechaEntrega": fechaSistema,
+        "Usuario": obtenerUsuario()
     };
 
     if (tipo === 'Retiro') {
@@ -116,24 +229,34 @@ function enviar(tipo) {
         payload["Materia"] = document.getElementById('materiaReprobado').value;
     }
 
+    // 'text/plain' evita que el navegador dispare una petición de "preflight" (CORS),
+    // que es una de las causas más comunes de que el guardado se sienta lento.
     fetch(urlSheet, {
         method: 'POST',
-        mode: 'no-cors',
-        cache: 'no-cache',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
     })
-    .then(() => {
-        alert("✅ Registro guardado. El núcleo se asignará automáticamente en el sistema.");
-        location.reload(); 
+    .then(res => res.json())
+    .then(data => {
+        if (data && data.ok) {
+            mostrarToast("✅ Registro guardado correctamente");
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            mostrarToast("❌ " + (data && data.error ? data.error : "No se pudo guardar"), true);
+            btn.disabled = false;
+            btn.innerText = textoOriginal;
+        }
     })
-    .catch(err => {
-        alert("❌ Error de conexión");
+    .catch(() => {
+        mostrarToast("❌ Error de conexión. Intenta de nuevo.", true);
         btn.disabled = false;
-        btn.innerText = "Reintentar";
+        btn.innerText = textoOriginal;
     });
 }
 
-// 5. GESTIÓN DE MATERIAS (Reprobados)
+/* ============================================================
+   6. GESTIÓN DE MATERIAS (Reprobados)
+   ============================================================ */
 const listaMaterias = ["Lengua y Literatura", "Matemática", "Inglés", "Ciencias Naturales", "Ciencias Sociales", "Química", "Física", "Biología", "Geografía", "Economía", "Filosofía", "Vocación Productiva"];
 let seleccionadas = [];
 
@@ -166,66 +289,87 @@ function toggleMateria(elemento, materia, limite) {
             seleccionadas.push(materia);
             elemento.classList.add('seleccionada');
         } else {
-            alert(`⚠️ Solo puedes seleccionar ${max} asignatura(s)`);
+            mostrarToast(`⚠️ Solo puedes seleccionar ${max} asignatura(s)`, true);
         }
     }
     document.getElementById('materiaReprobado').value = seleccionadas.join(", ");
     validar('Reprobado');
 }
 
-// 6. CONSULTA DE REPORTES
+/* ============================================================
+   7. CONSULTA DE REPORTES (ahora sí funciona: el backend tiene doGet)
+   ============================================================ */
 function consultarDatos() {
     const tipo = document.getElementById('filtroTipo').value;
     const nucleoSeleccionado = document.getElementById('filtroNucleo').value;
+    const soloMios = document.getElementById('filtroSoloMios').checked;
     const contenedor = document.getElementById('tablaResultados');
-    
-    contenedor.innerHTML = "<p>Extrayendo datos de columnas T y R...</p>";
 
-    const urlConsulta = `${urlSheet}?tipo=${tipo}&nucleo=${encodeURIComponent(nucleoSeleccionado)}`;
+    contenedor.innerHTML = "<p class='mensaje-vacio'>Buscando registros…</p>";
+
+    let urlConsulta = `${urlSheet}?tipo=${encodeURIComponent(tipo)}&nucleo=${encodeURIComponent(nucleoSeleccionado)}`;
+    if (soloMios) {
+        urlConsulta += `&usuario=${encodeURIComponent(obtenerUsuario())}`;
+    }
 
     fetch(urlConsulta)
         .then(res => res.json())
         .then(datos => {
+            if (datos && datos.error) {
+                contenedor.innerHTML = `<p class='mensaje-vacio'>⚠️ ${datos.error}</p>`;
+                return;
+            }
             if (!datos || datos.length === 0) {
-                contenedor.innerHTML = "<p>No se encontraron registros.</p>";
+                contenedor.innerHTML = "<p class='mensaje-vacio'>No se encontraron registros.</p>";
                 return;
             }
 
-            let tablaHTML = `<table class="tabla-reporte" style="width:100%; border-collapse: collapse; font-size: 11px;">
+            const esRetiros = tipo === 'Retiros';
+            let tablaHTML = `<table class="tabla-reporte">
                 <thead>
-                    <tr style="background-color: #1e40af; color: white;">
+                    <tr>
                         <th>Núcleo</th>
                         <th>Centro Educativo</th>
                         <th>Cód. Persona</th>
-                        <th>Nombre Completo (CSV)</th>
-                        <th>${tipo === 'Retiros' ? 'Causa del Retiro' : 'Materias Reprobadas'}</th>
+                        <th>Nombre</th>
+                        <th>${esRetiros ? 'Causa del Retiro' : 'Materias Reprobadas'}</th>
+                        <th>Registrado por</th>
                     </tr>
                 </thead>
                 <tbody>`;
 
             datos.forEach(fila => {
-                const codigoPersona = fila["Codigo_Persona_Real"] || "";
-                const nombreCSV = mapaEstudiantes.get(codigoPersona.toString().toUpperCase()) || "No encontrado";
-                const escuela = fila["Centro Educativo"] || fila["CENTRO EDUCATIVO"] || "-";
-                const nucleo = fila["Nucleo_Real"] || "S/N";
-                
-                // Usamos el detalle que viene directamente de la columna T o R
-                const detalleFinal = fila["Detalle_Real"] || "-";
+                const codigoPersona = fila["Cod Único Per"] || "";
+                const nombreCompleto = _nombreDesdeFila(fila, codigoPersona);
+                const escuela = fila["Centro Educativo"] || "-";
+                const nucleo = fila["NUCLEO"] || "S/N";
+                const detalle = esRetiros ? (fila["Causa del Retiro"] || "-") : (fila["CLASE. REPR"] || "-");
+                const registradoPor = fila["Registrado_Por"] || "-";
+                const claseDetalle = esRetiros ? "detalle-retiro" : "detalle-reprobado";
 
                 tablaHTML += `
-                    <tr style="border-bottom: 1px solid #ccc;">
-                        <td>${nucleo}</td>
-                        <td style="text-align: left;">${escuela}</td>
+                    <tr>
+                        <td><span class="sello-nucleo">${nucleo}</span></td>
+                        <td>${escuela}</td>
                         <td>${codigoPersona}</td>
-                        <td style="text-align: left;">${nombreCSV}</td>
-                        <td style="font-weight: bold; color: #b91c1c;">${detalleFinal}</td>
+                        <td>${nombreCompleto}</td>
+                        <td class="${claseDetalle}">${detalle}</td>
+                        <td>${registradoPor}</td>
                     </tr>`;
             });
 
             tablaHTML += `</tbody></table>`;
             contenedor.innerHTML = tablaHTML;
         })
-        .catch(err => {
-            contenedor.innerHTML = "<p style='color:red'>Error al conectar con el servidor municipal.</p>";
+        .catch(() => {
+            contenedor.innerHTML = "<p class='mensaje-vacio'>❌ Error al conectar con el servidor.</p>";
         });
+}
+
+function _nombreDesdeFila(fila, codigoPersona) {
+    const partes = [fila["Primer Nombre"], fila["Segundo Nombre"], fila["Primer Apellido"], fila["Segundo Apellido"]]
+        .filter(Boolean);
+    if (partes.length > 0) return partes.join(" ");
+    // Respaldo: buscar en el CSV local si el reporte no trae el nombre
+    return mapaEstudiantes.get(String(codigoPersona).toUpperCase()) || "No encontrado";
 }
