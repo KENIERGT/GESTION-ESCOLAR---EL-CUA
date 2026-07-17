@@ -3,33 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RETIROS Y REPROBADOS</title>
+    <title>Retiros y Reprobados · El Cua</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="loader">Cargando ......</div>
+    <div id="loader">
+        <div class="loader-punto"></div> Cargando base de estudiantes…
+    </div>
 
-    <div id="menuPrincipal" class="container text-center">
-        <h1>División de Estadísticas Educativas - El Cua</h1>
+    <div id="toast" class="toast"></div>
+
+    <!-- ============ PANTALLA DE BIENVENIDA (solo primera vez) ============ -->
+    <div id="pantallaBienvenida" class="container bienvenida d-none">
+        <div class="sello-header">EEC</div>
+        <h1>Antes de empezar</h1>
+        <p class="subtexto">Escribe tu nombre para identificar los registros que hagas. No necesitas contraseña — esto se guarda solo en este dispositivo.</p>
+
+        <div class="campo">
+            <label>Tu nombre:</label>
+            <input type="text" id="nombreUsuario" placeholder="Ej: Ana Pérez">
+        </div>
+
+        <div class="campo">
+            <label>Tu núcleo (opcional):</label>
+            <select id="nucleoUsuario">
+                <option value="">-- No especificar --</option>
+            </select>
+        </div>
+
+        <button class="btn-enviar" onclick="guardarUsuario()">Continuar</button>
+    </div>
+
+    <!-- ============ BARRA SUPERIOR CON USUARIO ============ -->
+    <div id="barraUsuario" class="barra-usuario d-none">
+        <span id="nombreMostrado"></span>
+        <button class="btn-cambiar-usuario" onclick="cambiarUsuario()">Cambiar</button>
+    </div>
+
+    <!-- ============ MENÚ PRINCIPAL ============ -->
+    <div id="menuPrincipal" class="container text-center d-none">
+        <div class="eyebrow">División de Estadísticas Educativas</div>
+        <h1>El Cua</h1>
+        <p class="subtexto">Registro de retiros y reprobados por núcleo escolar</p>
+
         <div class="menu-botones">
-            <button class="btn-menu" onclick="mostrarSeccion('Retiros')">
-                RETIROS
+            <button class="btn-menu btn-menu-retiro" onclick="mostrarSeccion('Retiros')">
+                <span class="btn-menu-icono">↩</span>
+                <span>RETIROS</span>
             </button>
-            <button class="btn-menu" onclick="mostrarSeccion('Reprobados')">
-                REPROBADOS
+            <button class="btn-menu btn-menu-reprobado" onclick="mostrarSeccion('Reprobados')">
+                <span class="btn-menu-icono">✕</span>
+                <span>REPROBADOS</span>
             </button>
-            <button class="btn-menu" onclick="mostrarSeccion('Reportes')">
-                CONSULTAR REPORTES
+            <button class="btn-menu btn-menu-reportes" onclick="mostrarSeccion('Reportes')">
+                <span class="btn-menu-icono">▤</span>
+                <span>CONSULTAR REPORTES</span>
             </button>
         </div>
     </div>
 
+    <!-- ============ REPORTES ============ -->
     <div id="seccionReportes" class="container d-none">
         <button class="btn-regresar" onclick="irAlMenu()">⬅ Volver al Menú</button>
         <div class="card">
             <h2>Consulta de Registros</h2>
-            
+
             <div class="campo">
                 <label>1. Seleccione el Núcleo:</label>
                 <select id="filtroNucleo">
@@ -71,16 +113,22 @@
                 </select>
             </div>
 
+            <label class="campo-checkbox">
+                <input type="checkbox" id="filtroSoloMios">
+                Ver solo mis registros
+            </label>
+
             <button class="btn-enviar" onclick="consultarDatos()">Buscar Registros</button>
 
-            <div id="tablaResultados" class="tabla-container" style="margin-top: 20px;"></div>
+            <div id="tablaResultados" class="tabla-container"></div>
         </div>
     </div>
 
+    <!-- ============ RETIROS ============ -->
     <div id="seccionRetiros" class="container d-none">
         <button class="btn-regresar" onclick="irAlMenu()">⬅ Volver al Menú</button>
         <h2>Formulario de Retiros</h2>
-        
+
         <div class="campo">
             <label>Código Único de Persona:</label>
             <input type="text" id="codRetiro" placeholder="Ingrese código..." oninput="validar('Retiro')">
@@ -124,6 +172,7 @@
         <button id="btnRetiro" class="btn-enviar" disabled onclick="enviar('Retiro')">Guardar Retiro</button>
     </div>
 
+    <!-- ============ REPROBADOS ============ -->
     <div id="seccionReprobados" class="container d-none">
         <button class="btn-regresar" onclick="irAlMenu()">⬅ Volver al Menú</button>
         <h2>Formulario de Reprobados</h2>
@@ -147,8 +196,8 @@
         <div class="campo">
             <label>Seleccione las asignaturas:</label>
             <div id="contenedorAsignaturas" class="grid-asignaturas"></div>
-            <input type="hidden" id="materiaReprobado"> 
-            <div id="avisoLimite" style="color: #b91c1c; font-size: 0.8em; margin-top: 5px;"></div>
+            <input type="hidden" id="materiaReprobado">
+            <div id="avisoLimite" class="aviso-limite"></div>
         </div>
 
         <button id="btnReprobado" class="btn-enviar" disabled onclick="enviar('Reprobado')">Guardar Reprobado</button>
