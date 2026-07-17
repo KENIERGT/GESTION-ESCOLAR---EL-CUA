@@ -1,134 +1,352 @@
 /* =========================================
-   VARIABLES Y CONFIGURACIÓN BASE
+   TOKENS DE DISEÑO
+   Paleta inspirada en la región cafetalera y montañosa
+   de El Cua (pino, pergamino, barro, oro) y en el registro
+   de un libro de actas municipal.
    ========================================= */
 :root {
-    --primary-blue: #000000; /* Color principal */
-    --success-green: #28c41d; /* Color para acciones positivas */
-    --danger-red: #b91c1c;   /* Para errores o avisos */
-    --bg-body: #e5e7eb;      /* Fondo de la página */
-    --bg-card: #ffffff;      /* Fondo de contenedores */
-    --text-gray: #f3f4f6;
+    --pine:        #1F3A34;   /* verde pino oscuro - color principal / marca */
+    --pine-light:  #2E5449;
+    --parchment:   #F5F1E6;   /* fondo tipo papel */
+    --parchment-2: #ECE5D3;
+    --card:        #FFFDF8;
+    --ink:         #16201D;
+    --ink-soft:    #4A554F;
+    --sage:        #8AA69B;   /* bordes / detalles suaves */
+    --clay:        #B5482F;   /* rojo barro - reprobados / peligro */
+    --clay-soft:   #F3E2DC;
+    --gold:        #B98A2E;   /* dorado - retiros / acento */
+    --gold-soft:   #F1E6CC;
+    --shadow:      0 6px 20px rgba(22, 32, 29, 0.10);
+    --shadow-sm:   0 2px 8px rgba(22, 32, 29, 0.08);
+    --radius:      14px;
+    --font-ui:     'IBM Plex Sans', 'Segoe UI', sans-serif;
+    --font-mono:   'IBM Plex Mono', monospace;
 }
 
+* { box-sizing: border-box; }
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--bg-body);
+    font-family: var(--font-ui);
+    background:
+        linear-gradient(var(--parchment), var(--parchment)) fixed;
+    color: var(--ink);
     padding: 20px;
     margin: 0;
+    min-height: 100vh;
+}
+
+/* Textura sutil tipo "líneas de cuaderno" en el fondo, muy discreta */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 38px,
+        rgba(31, 58, 52, 0.035) 39px
+    );
+    z-index: -1;
+}
+
+h1, h2 {
+    font-family: var(--font-ui);
+    color: var(--pine);
+    letter-spacing: -0.01em;
+}
+
+h1 { font-size: 1.7rem; font-weight: 700; margin: 4px 0 6px; }
+h2 { font-size: 1.25rem; font-weight: 600; margin-top: 0; }
+
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--sage);
+}
+
+.subtexto {
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
 }
 
 /* =========================================
-   CONTENEDORES Y UTILIDADES
+   CONTENEDORES
    ========================================= */
 .container {
     max-width: 600px;
-    background: var(--bg-card);
-    padding: 25px;
-    border-radius: 12px;
+    background: var(--card);
+    padding: 28px 26px;
+    border-radius: var(--radius);
     margin: 0 auto 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(31, 58, 52, 0.06);
+    animation: entrada 0.32s ease;
+}
+
+@keyframes entrada {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .container, #toast, .materia-chip, .btn-menu { animation: none !important; transition: none !important; }
 }
 
 .d-none { display: none; }
 .text-center { text-align: center; }
 
+/* =========================================
+   LOADER
+   ========================================= */
 #loader {
     text-align: center;
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: var(--primary-blue);
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 14px;
+    color: var(--pine);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
+
+.loader-punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: pulso 1s ease-in-out infinite;
+}
+
+@keyframes pulso {
+    0%, 100% { opacity: 0.3; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1); }
+}
+
+/* =========================================
+   TOAST (reemplaza los alert())
+   ========================================= */
+.toast {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--pine);
+    color: var(--parchment);
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+    z-index: 999;
+    max-width: 90vw;
+}
+
+.toast.mostrar {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast.error { background: var(--clay); }
+
+/* =========================================
+   PANTALLA DE BIENVENIDA
+   ========================================= */
+.bienvenida { max-width: 440px; text-align: left; }
+
+.sello-header {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2.5px solid var(--pine);
+    color: var(--pine);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin: 0 auto 16px;
+    transform: rotate(-6deg);
+}
+
+/* =========================================
+   BARRA DE USUARIO
+   ========================================= */
+.barra-usuario {
+    max-width: 600px;
+    margin: 0 auto 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--pine);
+    color: var(--parchment);
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.btn-cambiar-usuario {
+    background: none;
+    border: 1px solid rgba(245, 241, 230, 0.4);
+    color: var(--parchment);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.btn-cambiar-usuario:hover { background: rgba(245, 241, 230, 0.12); }
 
 /* =========================================
    MENÚ PRINCIPAL
    ========================================= */
 .menu-botones {
     display: grid;
-    gap: 15px;
-    margin-top: 30px;
+    gap: 12px;
+    margin-top: 24px;
 }
 
 .btn-menu {
-    padding: 30px;
-    font-size: 20px;
-    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 22px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: var(--font-ui);
+    letter-spacing: 0.03em;
     cursor: pointer;
     border: none;
-    border-radius: 10px;
-    background: var(--primary-blue);
-    color: white;
-    transition: all 0.3s ease;
+    border-radius: 12px;
+    background: var(--pine);
+    color: var(--parchment);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: var(--shadow-sm);
 }
 
-.btn-menu:hover {
-    background: #1e40af;
-    transform: scale(1.02);
+.btn-menu-icono {
+    font-size: 1.3rem;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(245, 241, 230, 0.14);
+    border-radius: 50%;
+    flex-shrink: 0;
 }
+
+.btn-menu:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.btn-menu:active { transform: translateY(0); }
+
+.btn-menu-retiro   { background: var(--gold); color: var(--ink); }
+.btn-menu-reprobado{ background: var(--clay); }
+.btn-menu-reportes { background: var(--pine); }
 
 /* =========================================
-   FORMULARIOS (INPUTS Y SELECTS)
+   FORMULARIOS
    ========================================= */
-.campo { margin-bottom: 15px; }
+.campo { margin-bottom: 16px; }
 
 label {
     display: block;
-    font-weight: bold;
-    margin-bottom: 8px;
-    color: #374151;
+    font-weight: 600;
+    margin-bottom: 7px;
+    color: var(--ink);
+    font-size: 0.88rem;
 }
 
 input, select {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-sizing: border-box; /* Evita que el padding ensanche el input */
+    padding: 12px 13px;
+    border: 1.5px solid var(--sage);
+    border-radius: 9px;
+    box-sizing: border-box;
+    font-family: var(--font-ui);
+    font-size: 0.94rem;
+    background: var(--card);
+    color: var(--ink);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Caja de información del estudiante (Padre/Padrón) */
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--pine);
+    box-shadow: 0 0 0 3px rgba(31, 58, 52, 0.12);
+}
+
+input#codRetiro, input#codReprobado {
+    font-family: var(--font-mono);
+    letter-spacing: 0.03em;
+}
+
+.campo-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+    cursor: pointer;
+}
+
+.campo-checkbox input { width: auto; }
+
 .info-caja {
-    background: #dcfce7;
-    padding: 12px;
-    border-radius: 8px;
+    background: var(--gold-soft);
+    padding: 12px 14px;
+    border-radius: 9px;
     margin-top: 10px;
     display: none;
-    font-size: 14px;
-    border-left: 5px solid var(--success-green);
+    font-size: 0.88rem;
+    border-left: 4px solid var(--gold);
 }
 
 /* =========================================
-   SISTEMA DE ASIGNATURAS (CHIPS)
+   CHIPS DE ASIGNATURAS
    ========================================= */
 .grid-asignaturas {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 10px;
+    gap: 9px;
     margin-top: 10px;
 }
 
 .materia-chip {
-    padding: 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
+    padding: 11px 8px;
+    border: 1.5px solid var(--sage);
+    border-radius: 9px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 500;
     text-align: center;
-    background: #f9fafb;
-    transition: background 0.2s, color 0.2s;
-    user-select: none; /* Evita seleccionar texto al hacer clic rápido */
+    background: var(--card);
+    color: var(--ink);
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    user-select: none;
 }
 
-.materia-chip:hover {
-    background: #f3f4f6;
-    border-color: #9ca3af;
-}
+.materia-chip:hover { border-color: var(--pine); }
 
 .materia-chip.seleccionada {
-    background: #2563eb;
-    color: white;
-    border-color: #1e40af;
-    font-weight: 500;
+    background: var(--clay);
+    color: var(--parchment);
+    border-color: var(--clay);
 }
+
+.aviso-limite { color: var(--clay); font-size: 0.8em; margin-top: 6px; font-weight: 500; }
 
 /* =========================================
    BOTONES DE ACCIÓN
@@ -136,48 +354,97 @@ input, select {
 .btn-enviar {
     width: 100%;
     padding: 15px;
-    background: var(--success-green);
-    color: white;
+    background: var(--pine);
+    color: var(--parchment);
     border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 1rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
     cursor: pointer;
-    margin-top: 10px;
-    transition: background 0.3s;
+    margin-top: 8px;
+    transition: background 0.2s ease, transform 0.1s ease;
 }
 
+.btn-enviar:hover:not(:disabled) { background: var(--pine-light); }
+.btn-enviar:active:not(:disabled) { transform: scale(0.99); }
+
 .btn-enviar:disabled {
-    background: #9ca3af;
+    background: #c9c2b0;
+    color: #8a8370;
     cursor: not-allowed;
 }
 
 .btn-regresar {
     background: none;
     border: none;
-    color: var(--primary-blue);
+    color: var(--pine);
     cursor: pointer;
-    font-weight: bold;
-    margin-bottom: 20px;
+    font-weight: 600;
+    margin-bottom: 18px;
     padding: 0;
-    font-size: 0.9rem;
-    text-decoration: underline;
+    font-size: 0.85rem;
 }
 
-/*NUEVO: ESTILOS PARA INFORMES*/
+.btn-regresar:hover { text-decoration: underline; }
+
+/* =========================================
+   TABLA DE REPORTES
+   ========================================= */
+.tabla-container { margin-top: 18px; overflow-x: auto; }
 
 .tabla-container table {
     width: 100%;
-    margin-top: 15px;
-}
-
-.tabla-container th, .tabla-container td {
-    padding: 8px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
+    border-collapse: collapse;
+    font-size: 0.78rem;
 }
 
 .tabla-container th {
-    background-color: var(--primary-blue);
-    color: white;
+    background: var(--pine);
+    color: var(--parchment);
+    padding: 9px 8px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.tabla-container td {
+    padding: 9px 8px;
+    border-bottom: 1px solid var(--parchment-2);
+    color: var(--ink);
+}
+
+.tabla-container tr:hover td { background: var(--parchment-2); }
+
+/* "sello" de núcleo dentro de la tabla - elemento distintivo */
+.sello-nucleo {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border: 1.5px solid var(--pine);
+    border-radius: 20px;
+    color: var(--pine);
+    white-space: nowrap;
+}
+
+.detalle-retiro { color: var(--gold); font-weight: 600; }
+.detalle-reprobado { color: var(--clay); font-weight: 600; }
+
+.mensaje-vacio {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    padding: 24px 10px;
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+@media (max-width: 480px) {
+    body { padding: 12px; }
+    .container { padding: 20px 18px; }
+    h1 { font-size: 1.4rem; }
+    .btn-menu { padding: 17px 18px; font-size: 0.92rem; }
 }
