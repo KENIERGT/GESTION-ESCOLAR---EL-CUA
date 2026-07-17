@@ -440,6 +440,109 @@ input#codRetiro, input#codReprobado {
 }
 
 /* =========================================
+   ESTADÍSTICAS
+   ========================================= */
+.btn-menu-estadisticas { background: var(--pine-light); }
+
+.stats-totales {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.stat-card {
+    padding: 16px 14px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.stat-retiro { background: var(--gold-soft); }
+.stat-reprobado { background: var(--clay-soft); }
+
+.stat-numero {
+    font-family: var(--font-mono);
+    font-size: 1.9rem;
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.stat-retiro .stat-numero { color: var(--gold); }
+.stat-reprobado .stat-numero { color: var(--clay); }
+
+.stat-etiqueta {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+}
+
+.leyenda-grafico {
+    display: flex;
+    gap: 18px;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+}
+
+.leyenda-grafico span { display: flex; align-items: center; gap: 6px; }
+
+.punto {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.punto-retiro { background: var(--gold); }
+.punto-reprobado { background: var(--clay); }
+
+.fila-nucleo {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--parchment-2);
+}
+
+.fila-nucleo-nombre {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+}
+
+.fila-nucleo-barras { display: flex; flex-direction: column; gap: 4px; }
+
+.barra-track {
+    position: relative;
+    background: var(--parchment-2);
+    border-radius: 6px;
+    height: 18px;
+    overflow: hidden;
+}
+
+.barra-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.5s ease;
+    min-width: 2px;
+}
+
+.barra-retiro { background: var(--gold); }
+.barra-reprobado { background: var(--clay); }
+
+.barra-valor {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+/* =========================================
    RESPONSIVE
    ========================================= */
 @media (max-width: 480px) {
