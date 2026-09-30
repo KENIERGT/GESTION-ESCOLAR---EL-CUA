@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revisión de Tutores SINFO</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6f9; --panel:#fff; --ink:#1b2430; --muted:#5d6b7c; --line:#dde3ea;
+  --brand:#1f4e79; --brand-ink:#fff; --brand-soft:#e6eef7;
+  --ok:#1f7a4d; --ok-soft:#e3f4ea; --warn:#9a6700; --warn-soft:#fff4d6;
+  --err:#b42318; --err-soft:#fdecea; --shadow:0 1px 3px rgba(16,24,40,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f141a; --panel:#18202a; --ink:#e7edf3; --muted:#9aa8b8; --line:#2a3542;
+    --brand:#5b9bd5; --brand-ink:#0f141a; --brand-soft:#1c2c3d;
+    --ok:#4cc38a; --ok-soft:#15291f; --warn:#e3b341; --warn-soft:#2b2412;
+    --err:#f47067; --err-soft:#2f1716; --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px}
+.hidden{display:none!important}
+
+/* barra superior */
+header{background:var(--brand);color:var(--brand-ink)}
+header .wrap{display:flex;align-items:center;gap:12px;min-height:56px;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}
+header h1{font-size:16px;margin:0;font-weight:600;flex:1;min-width:0}
+header small{display:block;font-weight:400;opacity:.85;font-size:13px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:500}
+.btn:hover{filter:brightness(.97)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.btn.ghost{background:transparent;border-color:rgba(255,255,255,.5);color:var(--brand-ink)}
+
+/* login */
+.login{max-width:380px;margin:48px auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px;box-shadow:var(--shadow)}
+.login h2{margin:0 0 4px;font-size:20px}
+.login p{margin:0 0 20px;color:var(--muted);font-size:14px}
+label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
+input,select,textarea{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:10px 12px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:0;border-color:transparent}
+.login .btn{width:100%;margin-top:20px;padding:11px}
+.msg{margin-top:14px;padding:10px 12px;border-radius:8px;font-size:14px}
+.msg.err{background:var(--err-soft);color:var(--err)}
+.msg.info{background:var(--warn-soft);color:var(--warn)}
+
+/* resumen */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:18px 0 12px}
+.stat.r b{color:var(--err)}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:16px}
+.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+
+/* filtros */
+.filters{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.filters .search,.filters #fCentro,.filters #fModalidad{grid-column:span 2}
+.ctr{font-size:12px;font-weight:600;color:var(--brand)}
+.count{font-size:13px;color:var(--muted);margin:0 0 10px}
+
+/* tarjetas */
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;padding-bottom:40px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
+.card .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.card h3{margin:0;font-size:15px;font-weight:600}
+.meta{font-size:12.5px;color:var(--muted)}
+.tag{font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.tag.sin{background:var(--brand-soft);color:var(--brand)}
+.tag.conf{background:var(--ok-soft);color:var(--ok)}
+.tag.corr{background:var(--warn-soft);color:var(--warn)}
+.tag.ret{background:var(--err-soft);color:var(--err)}
+.btn.danger{background:transparent;border-color:var(--line);color:var(--err)}
+.card.retirado{opacity:.8}
+.tutor.ret{background:var(--err-soft)}
+.tutor{background:var(--bg);border-radius:8px;padding:8px 10px;font-size:13.5px}
+.tutor .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.tutor.new{background:var(--warn-soft)}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:12.5px}
+.old{text-decoration:line-through;opacity:.6}
+.actions{display:flex;gap:8px;margin-top:auto}
+.actions .btn{flex:1;padding:7px 10px;font-size:14px}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 0}
+
+/* modal */
+.back{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.modal{background:var(--panel);width:100%;max-width:480px;border-radius:14px 14px 0 0;padding:20px;max-height:92vh;overflow:auto}
+@media(min-width:600px){.back{align-items:center}.modal{border-radius:14px}}
+.modal h2{margin:0 0 2px;font-size:17px}
+.modal .row{display:flex;gap:8px;margin-top:18px}
+.modal .row .btn{flex:1}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.hint.bad{color:var(--err)}
+
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;z-index:20;max-width:calc(100% - 32px)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes s{to{transform:rotate(360deg)}}
+
+@media(max-width:700px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .stat:first-child{grid-column:1/-1}
+  .filters{grid-template-columns:1fr 1fr}
+  .filters .search,.filters #fCentro,.filters #fModalidad{grid-column:1/-1}
+  .list{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1 id="titulo">Revisión de Tutores SINFO<small>Delegación Municipal MINED · El Cuá</small></h1>
+    <button id="salir" class="btn ghost hidden">Salir</button>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<main id="vLogin" class="wrap">
+  <form class="login" id="fLogin" autocomplete="on">
+    <h2>Acceso de directores</h2>
+    <p>Ingrese el código de establecimiento de uno de sus centros y la clave de su núcleo que le entregó la delegación.</p>
+    <label for="codigo">Código de establecimiento</label>
+    <input id="codigo" inputmode="numeric" autocomplete="username" placeholder="Ej. 17678" required>
+    <label for="clave">Clave</label>
+    <input id="clave" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••" required>
+    <button class="btn primary" id="bEntrar" type="submit">Entrar</button>
+    <div id="loginMsg"></div>
+  </form>
+</main>
+
+<!-- PANEL -->
+<main id="vPanel" class="wrap hidden">
+  <div class="stats">
+    <div class="stat"><b id="sTotal">0</b><span>Estudiantes activos</span></div>
+    <div class="stat"><b id="sConf">0</b><span>Confirmados</span></div>
+    <div class="stat"><b id="sCorr">0</b><span>Corregidos</span></div>
+    <div class="stat"><b id="sSin">0</b><span>Sin revisar</span></div>
+    <div class="stat r"><b id="sRet">0</b><span>Retirados</span></div>
+  </div>
+  <div class="bar"><i id="barra"></i></div>
+
+  <div class="filters">
+    <input class="search" id="buscar" type="search" placeholder="Buscar estudiante, tutor o cédula…">
+    <select id="fCentro"></select>
+    <select id="fModalidad"><option value="">Todas las modalidades</option></select>
+    <select id="fGrado"><option value="">Todos los grados</option></select>
+    <select id="fEstado">
+      <option value="">Activos (todos)</option>
+      <option>Sin revisar</option><option>Confirmado</option><option>Corregido</option>
+      <option>Retirado</option>
+    </select>
+  </div>
+  <p class="count" id="conteo"></p>
+  <div class="list" id="lista"></div>
+</main>
+
+<!-- MODAL CORREGIR -->
+<div class="back hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitulo">
+  <form class="modal" id="fCorr">
+    <h2 id="mTitulo">Corregir tutor</h2>
+    <div class="meta" id="mEst"></div>
+    <div class="tutor" style="margin-top:12px">
+      <div class="lbl">Tutor en SINFO</div>
+      <div id="mActual"></div>
+    </div>
+    <label for="mTutor">Nombre completo del tutor</label>
+    <input id="mTutor" required placeholder="NOMBRES Y APELLIDOS" style="text-transform:uppercase">
+    <label for="mCedula">Cédula del tutor</label>
+    <input id="mCedula" maxlength="16" placeholder="2412010710010A" class="mono" style="text-transform:uppercase">
+    <div class="hint" id="hCed">13 dígitos y una letra, sin guiones. Si no tiene cédula, déjelo vacío y explíquelo abajo.</div>
+    <label for="mObs">Observación <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+    <textarea id="mObs" rows="2" maxlength="300" placeholder="Ej. La madre es ahora la tutora; el padre emigró."></textarea>
+    <div id="mMsg"></div>
+    <div class="row">
+      <button type="button" class="btn" id="mCancelar">Cancelar</button>
+      <button type="submit" class="btn primary" id="mGuardar">Guardar</button>
+    </div>
+  </form>
+</div>
+
+<!-- MODAL RETIRO -->
+<div class="back hidden" id="modalR" role="dialog" aria-modal="true" aria-labelledby="rTitulo">
+  <form class="modal" id="fRet">
+    <h2 id="rTitulo">Marcar como retirado</h2>
+    <div class="meta" id="rEst"></div>
+    <p class="hint" style="margin-top:10px;font-size:14px">¿Confirma que este estudiante ya no asiste? Saldrá del listado de activos. Puede deshacerlo después con el filtro <b>Retirado</b>.</p>
+    <div id="rMsg"></div>
+    <div class="row">
+      <button type="button" class="btn" id="rCancelar">Cancelar</button>
+      <button type="submit" class="btn primary" id="rGuardar" style="background:var(--err);border-color:var(--err)">Retirar</button>
+    </div>
+  </form>
+</div>
+
+<script>
+/* ============ CONFIGURACIÓN ============
+   Pegue aquí la URL de la aplicación web de Apps Script (termina en /exec). */
+const API_URL = 'https://script.google.com/macros/s/AKfycbzSLCgytuNJquLt66qppFCey2krDkclZWhn_Yg-_rKosRBRgMrfzFtpg74FYuzNl_ze/exec';
+/* ======================================= */
+
+const $ = id => document.getElementById(id);
+const RE_CED = /^\d{13}[A-Z]$/;
+let S = { codEst:'', clave:'', token:'', nucleo:'', director:'', centros:[], est:[] };
+let actual = null;
+
+const ss = {
+  get(k){ try{ return sessionStorage.getItem(k) }catch(e){ return null } },
+  set(k,v){ try{ sessionStorage.setItem(k,v) }catch(e){} },
+  del(k){ try{ sessionStorage.removeItem(k) }catch(e){} }
+};
+
+async function api(payload){
+  if(!API_URL) throw new Error('La página aún no está configurada (falta API_URL).');
+  const t0 = performance.now();
+  let r;
+  try{ r = await fetch(API_URL, { method:'POST', body: JSON.stringify(payload) }); } // text/plain: sin preflight CORS
+  catch(e){ throw new Error('Sin conexión a internet. Intente de nuevo.') }
+  if(!r.ok) throw new Error('Error de conexión ('+r.status+').');
+  const d = await r.json();
+  console.debug(`[API] ${payload.action}/${payload.tipo||''}: total ${Math.round(performance.now()-t0)} ms · servidor ${d.ms} ms`);
+  if(!d.ok) throw new Error(d.error || 'Error desconocido.');
+  return d;
+}
+
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+function msg(el, txt, tipo='err'){ $(el).innerHTML = txt ? `<div class="msg ${tipo}">${esc(txt)}</div>` : '' }
+function toast(t){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),2600) }
+function busy(btn, on, txt){ btn.disabled=on; if(on){ btn.dataset.t=btn.textContent; btn.innerHTML='<span class="spin"></span>'+(txt||'Guardando…') } else btn.textContent=btn.dataset.t||btn.textContent }
+
+/* ---------- login ---------- */
+$('fLogin').addEventListener('submit', async e => {
+  e.preventDefault();
+  const codigo = $('codigo').value.trim(), clave = $('clave').value.trim();
+  const b = $('bEntrar'); busy(b, true, 'Verificando…'); msg('loginMsg','');
+  try{
+    const d = await api({ action:'login', codEst:codigo, clave });
+    S = { codEst:codigo, clave, token:d.token, nucleo:d.nucleo, director:d.director, centros:d.centros, est:d.estudiantes };
+    ss.set('tut_sesion', JSON.stringify({codigo, clave}));
+    mostrarPanel();
+  }catch(err){ msg('loginMsg', err.message) }
+  finally{ busy(b, false) }
+});
+
+$('salir').onclick = () => { ss.del('tut_sesion'); S={codEst:'',clave:'',token:'',nucleo:'',director:'',centros:[],est:[]}; $('clave').value='';
+  $('vPanel').classList.add('hidden'); $('vLogin').classList.remove('hidden'); $('salir').classList.add('hidden');
+  $('titulo').innerHTML='Revisión de Tutores SINFO<small>Delegación Municipal MINED · El Cuá</small>'; };
+
+function mostrarPanel(){
+  $('vLogin').classList.add('hidden'); $('vPanel').classList.remove('hidden'); $('salir').classList.remove('hidden');
+  $('titulo').innerHTML = 'Núcleo '+esc(S.nucleo)+`<small>Director: ${esc(S.director)} · Revisión de tutores SINFO</small>`;
+  const conEst = S.centros.filter(c => S.est.some(x => x.codEst === c.codEst));
+  $('fCentro').innerHTML = `<option value="">Todo el núcleo (${conEst.length} centros)</option>` +
+    conEst.map(c => `<option value="${esc(c.codEst)}">${esc(c.codEst)} · ${esc(c.centro)}</option>`).join('');
+  $('fCentro').value = conEst.some(c => c.codEst === S.codEst) ? S.codEst : '';
+  llenarModalidades(); llenarGrados(); render();
+}
+
+function llenarModalidades(){
+  const ce = $('fCentro').value, prev = $('fModalidad').value;
+  const mods = [...new Set(S.est.filter(x => !ce || x.codEst === ce).map(x => x.modalidad))].sort();
+  $('fModalidad').innerHTML = '<option value="">Todas las modalidades</option>' +
+    mods.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+  if(mods.includes(prev)) $('fModalidad').value = prev;
+}
+const enFiltro = x => (!$('fCentro').value || x.codEst === $('fCentro').value) && (!$('fModalidad').value || x.modalidad === $('fModalidad').value);
+
+const ORDEN = ['Primero','Segundo','Tercero','Cuarto','Quinto','Sexto'];
+function llenarGrados(){
+  const ce = $('fCentro').value, prev = $('fGrado').value;
+  const grados = [...new Set(S.est.filter(enFiltro).map(x => x.nivel+'|'+x.seccion+'|'+x.turno))]
+    .sort((a,b)=>{ const [na,sa]=a.split('|'),[nb,sb]=b.split('|'); return (ORDEN.indexOf(na)-ORDEN.indexOf(nb)) || na.localeCompare(nb) || sa.localeCompare(sb) });
+  $('fGrado').innerHTML = '<option value="">Todos los grados</option>' +
+    grados.map(g => { const [n,s,t]=g.split('|'); return `<option value="${esc(g)}">${esc(n)} ${esc(s)} · ${esc(t.toLowerCase())}</option>` }).join('');
+  if(grados.includes(prev)) $('fGrado').value = prev;
+}
+$('fCentro').addEventListener('change', () => { llenarModalidades(); llenarGrados(); render() });
+$('fModalidad').addEventListener('change', () => { llenarGrados(); render() });
+
+/* ---------- lista ---------- */
+['fGrado','fEstado'].forEach(id => $(id).addEventListener('input', render));
+let tBus; $('buscar').addEventListener('input', () => { clearTimeout(tBus); tBus = setTimeout(render, 180) });
+const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
+
+function render(){
+  const ce = $('fCentro').value;
+  const todos = S.est.filter(enFiltro);
+  const est = todos.filter(x => x.estado !== 'Retirado');
+  const ret = todos.length - est.length;
+  const c = { conf: est.filter(x=>x.estado==='Confirmado').length, corr: est.filter(x=>x.estado==='Corregido').length };
+  $('sTotal').textContent = est.length; $('sConf').textContent = c.conf; $('sCorr').textContent = c.corr;
+  $('sSin').textContent = est.length - c.conf - c.corr; $('sRet').textContent = ret;
+  $('barra').style.width = todos.length ? ((c.conf+c.corr+ret)/todos.length*100)+'%' : '0';
+
+  const q = norm($('buscar').value.trim()), g = $('fGrado').value, st = $('fEstado').value;
+  const base = st === 'Retirado' ? todos.filter(x => x.estado === 'Retirado') : est;
+  const vis = base.filter(x =>
+    (!g || (x.nivel+'|'+x.seccion+'|'+x.turno) === g) &&
+    (!st || x.estado === st) &&
+    (!q || norm([x.estudiante,x.tutor,x.cedula,x.tutorNuevo,x.cedulaNueva].join(' ')).includes(q)));
+  $('conteo').textContent = `Mostrando ${vis.length} de ${base.length}` + (st === 'Retirado' ? ' retirados' : ' activos') + (ce ? '' : ' · todo el núcleo');
+
+  $('lista').innerHTML = vis.length ? vis.map(x => {
+    const cls = x.estado==='Confirmado' ? 'conf' : x.estado==='Corregido' ? 'corr' : x.estado==='Retirado' ? 'ret' : 'sin';
+    const corr = x.estado==='Corregido', reti = x.estado==='Retirado';
+    return `<article class="card${reti?' retirado':''}">
+      <div class="top"><div>${ce ? '' : `<div class="ctr">${esc(x.codEst)} · ${esc(x.centro)}</div>`}<h3>${esc(x.estudiante)}</h3>
+        <div class="meta">${esc(x.modalidad.toLowerCase())}<br>${esc(x.nivel)} ${esc(x.seccion)} · ${esc(x.turno.toLowerCase())} · ${esc(x.sexo)} · ${esc(x.edad)} años</div></div>
+        <span class="tag ${cls}">${esc(x.estado)}</span></div>
+      <div class="tutor"><div class="lbl">Tutor en SINFO</div>
+        <div class="${corr?'old':''}">${esc(x.tutor)||'<i>Sin tutor</i>'}<br><span class="mono">${esc(x.cedula)||'Sin cédula'}</span></div></div>
+      ${corr ? `<div class="tutor new"><div class="lbl">Corrección enviada · ${esc(x.fecha)}</div>
+        ${esc(x.tutorNuevo)}<br><span class="mono">${esc(x.cedulaNueva)||'Sin cédula'}</span>
+        ${x.observacion?`<div class="meta" style="margin-top:4px">${esc(x.observacion)}</div>`:''}</div>` : ''}
+      ${reti ? `<div class="tutor ret"><div class="lbl">Marcado como retirado · ${esc(x.fecha)}</div></div>` : ''}
+      <div class="actions">
+        ${reti ? `<button class="btn" data-react="${esc(x.codPersona)}">↩ Deshacer retiro</button>` : `
+        ${x.estado==='Sin revisar' ? `<button class="btn ok" data-conf="${esc(x.codPersona)}">✓ Correcto</button>` : ''}
+        <button class="btn" data-corr="${esc(x.codPersona)}">${corr?'Editar':'Corregir'}</button>
+        <button class="btn danger" data-ret="${esc(x.codPersona)}">Retirado</button>`}
+      </div></article>`;
+  }).join('') : '<div class="empty">No hay estudiantes con esos filtros.</div>';
+}
+
+$('lista').addEventListener('click', async e => {
+  const bc = e.target.closest('[data-conf]'), br = e.target.closest('[data-corr]');
+  if(bc) optimista(bc.dataset.conf, 'confirmar', { estado:'Confirmado' }, 'Tutor confirmado');
+  if(br) abrir(S.est.find(x => x.codPersona === br.dataset.corr));
+  const bt = e.target.closest('[data-ret]'), bx = e.target.closest('[data-react]');
+  if(bt) abrirRet(S.est.find(x => x.codPersona === bt.dataset.ret));
+  if(bx) optimista(bx.dataset.react, 'reactivar', { estado:'Sin revisar', fecha:'', observacion:'', tutorNuevo:'', cedulaNueva:'' }, 'Retiro anulado');
+});
+
+/* ---------- modal retiro ---------- */
+let retActual = null;
+function abrirRet(x){
+  retActual = x;
+  $('rEst').textContent = `${x.estudiante} · ${x.nivel} ${x.seccion} · ${x.centro}`;
+  msg('rMsg','');
+  $('modalR').classList.remove('hidden'); $('rGuardar').focus();
+}
+function cerrarRet(){ $('modalR').classList.add('hidden'); retActual = null }
+$('rCancelar').onclick = cerrarRet;
+$('modalR').addEventListener('click', e => { if(e.target.id==='modalR') cerrarRet() });
+document.addEventListener('keydown', e => { if(e.key==='Escape' && retActual) cerrarRet() });
+$('fRet').addEventListener('submit', async e => {
+  e.preventDefault();
+  const cod = retActual.codPersona; cerrarRet();
+  optimista(cod, 'retirar', { estado:'Retirado' }, 'Estudiante marcado como retirado');
+});
+
+/** Datos comunes de cada guardado */
+const base = x => ({ action:'guardar', codEst:S.codEst, clave:S.clave, token:S.token, codPersona:x.codPersona, fila:x.fila });
+
+/** Cambia la tarjeta al instante y guarda en segundo plano; si falla, la revierte. */
+async function optimista(codPersona, tipo, cambios, ok){
+  const x = S.est.find(e => e.codPersona === codPersona); if(!x) return;
+  const antes = { ...x };
+  Object.assign(x, cambios, cambios.estado !== 'Sin revisar' ? { fecha:'guardando…' } : {});
+  render(); toast(ok);
+  try{ const d = await api({ ...base(x), tipo }); actualizar(d.registro) }
+  catch(err){ Object.assign(x, antes); render(); toast('No se guardó: ' + err.message) }
+}
+
+function actualizar(reg){ const i = S.est.findIndex(x => x.codPersona === reg.codPersona); if(i>=0) S.est[i] = reg; render() }
+
+/* ---------- modal ---------- */
+function abrir(x){
+  actual = x;
+  $('mEst').textContent = `${x.estudiante} · ${x.nivel} ${x.seccion} · ${x.centro}`;
+  $('mActual').innerHTML = `${esc(x.tutor)||'<i>Sin tutor</i>'}<br><span class="mono">${esc(x.cedula)||'Sin cédula'}</span>`;
+  $('mTutor').value = x.estado==='Corregido' ? x.tutorNuevo : x.tutor;
+  $('mCedula').value = x.estado==='Corregido' ? x.cedulaNueva : x.cedula;
+  $('mObs').value = x.estado==='Corregido' ? x.observacion : '';
+  msg('mMsg',''); validarCed();
+  $('modal').classList.remove('hidden'); $('mTutor').focus();
+}
+function cerrar(){ $('modal').classList.add('hidden'); actual=null }
+$('mCancelar').onclick = cerrar;
+$('modal').addEventListener('click', e => { if(e.target.id==='modal') cerrar() });
+document.addEventListener('keydown', e => { if(e.key==='Escape' && actual) cerrar() });
+
+function validarCed(){
+  const v = $('mCedula').value.toUpperCase().replace(/[\s-]/g,'');
+  const h = $('hCed');
+  if(v && !RE_CED.test(v)){ h.textContent = `Formato incorrecto (${v.length}/14). Deben ser 13 dígitos y una letra final.`; h.classList.add('bad'); return false }
+  h.textContent = v ? 'Formato correcto.' : '13 dígitos y una letra, sin guiones. Si no tiene cédula, déjelo vacío y explíquelo abajo.';
+  h.classList.remove('bad'); return true;
+}
+$('mCedula').addEventListener('input', validarCed);
+
+$('fCorr').addEventListener('submit', async e => {
+  e.preventDefault();
+  const tutor = $('mTutor').value.trim().toUpperCase().replace(/\s+/g,' ');
+  const cedula = $('mCedula').value.toUpperCase().replace(/[\s-]/g,'');
+  const obs = $('mObs').value.trim();
+  if(tutor.split(' ').length < 2) return msg('mMsg','Escriba nombres y apellidos del tutor.');
+  if(!validarCed()) return msg('mMsg','Revise la cédula.');
+  if(!cedula && !obs) return msg('mMsg','Si el tutor no tiene cédula, explíquelo en la observación.');
+  if(tutor === actual.tutor && cedula === actual.cedula) return msg('mMsg','Los datos son iguales a los del SINFO. Si son correctos, use “Es correcto”.', 'info');
+  const b = $('mGuardar'); busy(b, true); msg('mMsg','');
+  try{
+    const d = await api({ ...base(actual), tipo:'corregir', tutor, cedula, observacion:obs });
+    actualizar(d.registro); cerrar(); toast('Corrección guardada');
+  }catch(err){ msg('mMsg', err.message) }
+  finally{ busy(b, false) }
+});
+
+/* ---------- reanudar sesión ---------- */
+(async () => {
+  if(!API_URL){ msg('loginMsg','La página aún no está conectada a la base de datos. Configure API_URL en index.html.','info'); return }
+  fetch(API_URL).catch(()=>{});   // "calienta" el servidor mientras el director escribe su clave
+  const s = ss.get('tut_sesion'); if(!s) return;
+  try{ const {codigo, clave} = JSON.parse(s); $('codigo').value = codigo; $('clave').value = clave; $('fLogin').requestSubmit() }catch(e){}
+})();
+</script>
+</body>
+</html>
