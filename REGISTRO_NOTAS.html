@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Registro de Calificaciones</title>
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com">
+<style>
+  :root{
+    --bg:#f2f4f7; --card:#ffffff; --border:#d8dde5; --line:#e8ebf0; --text:#1a2332; --muted:#5d6878;
+    --primary:#1f3d6b; --primary-dark:#162d50; --primary-soft:#e8eef7; --head:#f6f8fb; --zebra:#fafbfc;
+    --ok:#1d6a43; --ok-bg:#e6f2eb; --danger:#b42318; --danger-bg:#fdeceb; --warn:#8a5a00; --warn-bg:#fdf4dc;
+    --radius:8px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10151c; --card:#171e27; --border:#2a3441; --line:#222b36; --text:#e6eaf0; --muted:#97a2b1;
+      --primary:#6f9ad6; --primary-dark:#8db0e3; --primary-soft:#1c2a3d; --head:#1b2430; --zebra:#19212b;
+      --ok:#5fbf8b; --ok-bg:#16291f; --danger:#f0857a; --danger-bg:#3a1f1d; --warn:#e6bd62; --warn-bg:#33291a;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10151c; --card:#171e27; --border:#2a3441; --line:#222b36; --text:#e6eaf0; --muted:#97a2b1;
+    --primary:#6f9ad6; --primary-dark:#8db0e3; --primary-soft:#1c2a3d; --head:#1b2430; --zebra:#19212b;
+    --ok:#5fbf8b; --ok-bg:#16291f; --danger:#f0857a; --danger-bg:#3a1f1d; --warn:#e6bd62; --warn-bg:#33291a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; background:var(--bg); color:var(--text);
+       font-size:15px; line-height:1.45; -webkit-font-smoothing:antialiased;}
+  .banda{background:#1f3d6b; color:#fff; padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;}
+  .wrap{max-width:1120px; margin:0 auto;}
+  .banda .wrap{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;}
+  .banda small{display:block; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; opacity:.75;}
+  .banda h1{margin:2px 0 0; font-size:1.25rem; font-weight:600; letter-spacing:.01em;}
+  .corte{border:1px solid rgba(255,255,255,.45); border-radius:4px; padding:5px 12px; font-size:.82rem; font-weight:600; letter-spacing:.03em;}
+  nav.tabs{background:var(--card); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:6;}
+  nav.tabs .wrap{display:flex; gap:2px; padding:0 16px;}
+  .tab{background:none; border:none; border-bottom:2px solid transparent; padding:12px 16px; font-size:.9rem; font-weight:600; color:var(--muted); cursor:pointer; font-family:inherit;}
+  .tab.on{color:var(--primary); border-bottom-color:var(--primary);}
+  main{max-width:1120px; margin:0 auto; padding:20px 16px 60px;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px;}
+  .card-h{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+  .card h2{margin:0; font-size:1rem; font-weight:600;}
+  .paso{display:inline-block; width:22px; height:22px; border-radius:50%; background:var(--primary); color:#fff; font-size:.75rem; text-align:center; line-height:22px; margin-right:8px; vertical-align:1px;}
+  .sub{margin:4px 0 0; color:var(--muted); font-size:.85rem;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px;}
+  .span2{grid-column:span 2;}
+  @media (max-width:640px){ .span2{grid-column:auto;} }
+  label{display:block; font-size:.74rem; color:var(--muted); margin-bottom:5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
+  input[type=text], input[type=password], select{width:100%; padding:9px 11px; border-radius:6px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); font-size:.93rem; font-family:inherit;}
+  input:focus, select:focus{outline:2px solid var(--primary); outline-offset:-1px; border-color:var(--primary);}
+  select:disabled, input:disabled{background:var(--head); opacity:.7;}
+  .codigo{display:flex; gap:8px;}
+  .codigo input{max-width:160px; letter-spacing:.2em; font-weight:600; text-align:center;}
+  .info{margin-top:12px; font-size:.84rem; color:var(--muted); min-height:1em;}
+  .barra-grupo{background:var(--primary-soft); border-left:3px solid var(--primary); border-radius:4px; padding:10px 14px; margin-bottom:14px; font-size:.9rem;}
+  .barra-grupo b{font-weight:600;}
+  .muted{color:var(--muted); font-size:.85rem;}
+
+  /* Tabla de notas */
+  .tablewrap{overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--border); border-radius:6px;}
+  table.notas{width:100%; border-collapse:collapse; font-size:.82rem; table-layout:fixed;}
+  table.notas col.c-n{width:38px;} table.notas col.c-name{width:230px;} table.notas col.c-g{width:66px;} table.notas col.c-p{width:62px;}
+  table.notas thead th{background:var(--head); text-align:center; padding:8px 4px; border-bottom:1px solid var(--border); color:var(--muted);
+    font-size:.66rem; font-weight:500; line-height:1.2; word-break:break-word; vertical-align:bottom;}
+  table.notas thead th b{display:block; color:var(--text); font-size:.74rem; font-weight:700; letter-spacing:.02em;}
+  table.notas tbody td{padding:4px; border-bottom:1px solid var(--line); text-align:center; vertical-align:middle; background:var(--card);}
+  table.notas tbody tr:nth-child(even) td{background:var(--zebra);}
+  table.notas tbody tr:hover td{background:var(--primary-soft);}
+  .nombre-col{text-align:left !important; line-height:1.25; position:sticky; left:0; z-index:2; word-break:break-word; font-size:.8rem; font-weight:600;}
+  .nombre-col span{color:var(--muted); font-weight:400;}
+  thead th.nombre-col{z-index:3; text-align:left; background:var(--head) !important;}
+  .num-col{color:var(--muted); font-size:.72rem;}
+  .gi, .qs{display:block; width:100%; height:32px; text-align:center; text-align-last:center; margin:0; padding:0 2px; font-size:.86rem;
+    border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); -webkit-appearance:none; appearance:none; font-family:inherit;}
+  .gi:focus, .qs:focus{outline:2px solid var(--primary); outline-offset:-1px;}
+  .gi.mod, .qs.mod{border-color:var(--warn); box-shadow:inset 0 -2px 0 var(--warn);}
+  .gi.baja, .rv.baja{color:var(--danger); font-weight:700;}
+  .gi.baja{background:var(--danger-bg);}
+  .rv{display:inline-block; min-width:30px; font-weight:600;}
+  .prom{font-weight:700;} .prom.baja{color:var(--danger);}
+  .leyenda{display:flex; gap:16px; flex-wrap:wrap; font-size:.78rem; color:var(--muted); margin:-4px 0 10px;}
+  .leyenda i{display:inline-block; width:14px; height:10px; border-radius:2px; vertical-align:-1px; margin-right:5px; border:1px solid var(--border);}
+  @media (max-width:640px){
+    .gi, .qs{font-size:16px; height:40px;}
+    main{padding:12px 10px 50px;} .card{padding:14px;}
+  }
+  @media (max-width:600px){
+    table.notas, table.notas thead, table.notas tbody, table.notas tr, table.notas td{display:block; width:auto;}
+    table.notas col{display:none;}
+    table.notas thead{position:absolute; left:-9999px; top:-9999px;}
+    .tablewrap{border:none; overflow:visible;}
+    table.notas tbody tr{border:1px solid var(--border); border-radius:6px; padding:10px 12px; margin-bottom:10px; background:var(--card);}
+    table.notas tbody tr td{background:transparent !important;}
+    table.notas tbody td{display:flex; justify-content:space-between; align-items:center; gap:10px; border:none; padding:5px 0; text-align:right;}
+    table.notas tbody td::before{content:attr(data-label); font-weight:600; color:var(--muted); font-size:.74rem; text-align:left;}
+    .nombre-col{position:static; padding:0 0 8px !important; margin-bottom:6px; border-bottom:1px solid var(--line) !important; font-size:.95rem; display:block !important;}
+    .nombre-col::before, .num-col{display:none !important;}
+    .gi, .qs{width:120px;}
+  }
+
+  /* Botones y mensajes */
+  .btn{background:var(--primary); color:#fff; border:1px solid var(--primary); padding:9px 18px; border-radius:6px; font-size:.9rem; font-weight:600; cursor:pointer; font-family:inherit;}
+  .btn:hover{background:var(--primary-dark); border-color:var(--primary-dark);}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .btn.sec{background:var(--card); color:var(--text); border-color:var(--border); font-weight:500;}
+  .btn.sec:hover{background:var(--head);}
+  .btn.sm{padding:5px 11px; font-size:.8rem;}
+  .msg{padding:10px 14px; border-radius:6px; margin-top:12px; font-size:.86rem; border-left:3px solid;}
+  .msg.ok{background:var(--ok-bg); color:var(--ok);}
+  .msg.err{background:var(--danger-bg); color:var(--danger);}
+  .msg.warn{background:var(--warn-bg); color:var(--warn);}
+  .acciones{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:14px;}
+  .fila{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin:16px 0;}
+  .stat{border:1px solid var(--border); border-radius:6px; padding:10px 14px;}
+  .stat b{display:block; font-size:1.3rem; font-weight:600;}
+  .stat span{font-size:.78rem; color:var(--muted);}
+  .empty{padding:26px 10px; text-align:center; color:var(--muted); font-size:.88rem;}
+  .spin{display:inline-block; width:12px; height:12px; border:2px solid var(--border); border-top-color:var(--primary); border-radius:50%;
+    animation:g .7s linear infinite; vertical-align:-1px; margin-right:7px;}
+  @keyframes g{to{transform:rotate(360deg)}}
+  .lista{overflow-x:auto; border:1px solid var(--border); border-radius:6px; margin-top:12px;}
+  .lista table{width:100%; border-collapse:collapse; font-size:.84rem;}
+  .lista th{background:var(--head); text-align:left; padding:9px 10px; border-bottom:1px solid var(--border); color:var(--muted); font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap;}
+  .lista td{padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  .lista tr.clic{cursor:pointer;} .lista tr.clic:hover td{background:var(--primary-soft);}
+  .bar{height:6px; background:var(--line); border-radius:3px; overflow:hidden; min-width:90px;}
+  .bar i{display:block; height:100%; background:var(--primary);}
+  .chip{font-size:.74rem; font-weight:600; padding:2px 8px; border-radius:3px; white-space:nowrap; border:1px solid;}
+  .chip.ok{color:var(--ok); background:var(--ok-bg); border-color:transparent;}
+  .chip.pend{color:var(--muted); border-color:var(--border);}
+  .check{display:flex; align-items:center; gap:6px; font-size:.84rem; color:var(--muted);}
+  .check input{width:auto;}
+  .tag{font-style:normal; font-size:.66rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--warn);
+    background:var(--warn-bg); border-radius:3px; padding:1px 5px; margin-left:4px; white-space:nowrap;}
+  .lnk{background:none; border:none; color:var(--danger); font-size:.72rem; cursor:pointer; padding:0 0 0 6px; text-decoration:underline; font-family:inherit;}
+  table.notas tbody tr.ag td{background:var(--warn-bg) !important;}
+  .chip.warn{color:var(--warn); background:var(--warn-bg); border-color:transparent;}
+  .stat.clic{cursor:pointer;} .stat.clic:hover{border-color:var(--warn);}
+  .stat.alerta b{color:var(--warn);}
+  .agregar{margin-top:14px; border-top:1px solid var(--line); padding-top:14px;}
+  .form-agregar{margin-top:12px; border:1px solid var(--border); border-radius:6px; padding:14px; background:var(--head);}
+  .form-agregar .grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}
+  [hidden]{display:none !important;}
+</style>
+</head>
+<body>
+<div class="banda">
+  <div class="wrap">
+    <div>
+      <small>Ministerio de Educación · Delegación Municipal El Cuá</small>
+      <h1>Registro de Calificaciones</h1>
+    </div>
+    <div class="corte" id="corteBadge">Cargando…</div>
+  </div>
+</div>
+<nav class="tabs">
+  <div class="wrap">
+    <button class="tab on" data-vista="docente">Ingreso de notas</button>
+    <button class="tab" data-vista="direccion">Dirección y seguimiento</button>
+  </div>
+</nav>
+
+<main>
+  <!-- ================= DOCENTE ================= -->
+  <section id="vistaDocente">
+    <div class="card">
+      <div class="card-h"><div><h2><span class="paso">1</span>Datos del docente y del grupo</h2>
+        <p class="sub" id="subtitulo">Seleccione su núcleo, escriba el código de acceso del NER y elija el grupo.</p></div></div>
+      <div class="grid">
+        <div>
+          <label for="docente">Nombre del docente</label>
+          <input type="text" id="docente" placeholder="Nombres y apellidos" autocomplete="name">
+        </div>
+        <div>
+          <label for="nucleo">Núcleo educativo (NER)</label>
+          <select id="nucleo"><option value="">Cargando…</option></select>
+        </div>
+        <div id="boxCodigo" hidden>
+          <label for="codigo">Código de acceso del NER</label>
+          <div class="codigo">
+            <input type="password" id="codigo" inputmode="numeric" autocomplete="off" maxlength="12">
+            <button class="btn" id="btnCodigo">Entrar</button>
+          </div>
+        </div>
+        <div id="boxEscuela">
+          <label for="escuela">Escuela</label>
+          <select id="escuela" disabled><option value="">Seleccione el núcleo</option></select>
+        </div>
+        <div class="span2">
+          <label for="grupo">Grupo (modalidad · grado · sección · turno)</label>
+          <select id="grupo" disabled><option value="">Seleccione la escuela</option></select>
+        </div>
+      </div>
+      <div class="info" id="loadmsg"></div>
+    </div>
+
+    <div class="card" id="tablaCard" hidden>
+      <div class="card-h"><div><h2><span class="paso">2</span>Calificaciones</h2>
+        <p class="sub">Puede volver a este grupo y modificar las notas cuando lo necesite. Solo se guardan las casillas que usted cambie.</p></div></div>
+      <div class="barra-grupo" id="resumenGrupo"></div>
+      <div class="leyenda"><span><i style="border-color:var(--warn);box-shadow:inset 0 -2px 0 var(--warn)"></i>Cambio sin guardar</span><span><i style="background:var(--danger-bg);border-color:var(--danger)"></i>Nota menor a 60</span><span><i style="background:var(--warn-bg)"></i>Estudiante agregado (no está en el padrón)</span><span>Enter: pasar al siguiente estudiante</span></div>
+      <div id="tablaDocente"></div>
+      <div class="acciones">
+        <span class="muted" id="statusText"></span>
+        <button class="btn" id="btnGuardar">Guardar notas</button>
+      </div>
+      <div id="saveMsg"></div>
+      <div class="agregar">
+        <button class="btn sec sm" id="btnMostrarAgregar">Agregar estudiante que no aparece en la lista</button>
+        <div class="form-agregar" id="formAgregar" hidden>
+          <p class="sub" style="margin:0 0 12px;">Use esta opción solo si el estudiante asiste a este grupo y no aparece en el padrón. Se guarda de inmediato y luego puede digitar sus notas en la tabla.</p>
+          <div class="grid">
+            <div><label for="nA1">Primer apellido *</label><input type="text" id="nA1" autocomplete="off"></div>
+            <div><label for="nA2">Segundo apellido</label><input type="text" id="nA2" autocomplete="off"></div>
+            <div><label for="nN1">Primer nombre *</label><input type="text" id="nN1" autocomplete="off"></div>
+            <div><label for="nN2">Segundo nombre</label><input type="text" id="nN2" autocomplete="off"></div>
+            <div><label for="nCp">Código de persona</label><input type="text" id="nCp" autocomplete="off" placeholder="Si lo tiene"></div>
+          </div>
+          <div class="fila" style="margin-top:12px;">
+            <button class="btn sm" id="btnAgregar">Agregar al grupo</button>
+            <button class="btn sec sm" id="btnCancelarAgregar">Cancelar</button>
+          </div>
+          <div id="agregarMsg"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DIRECCIÓN ================= -->
+  <section id="vistaDireccion" hidden>
+    <div class="card" id="loginCard">
+      <div class="card-h"><div><h2>Acceso de dirección y estadística</h2>
+        <p class="sub">Cada director consulta el avance y las notas de las escuelas de su núcleo.</p></div></div>
+      <div class="grid" style="max-width:460px;">
+        <div><label for="adminUser">Usuario</label><input type="text" id="adminUser" autocomplete="username" autocapitalize="none"></div>
+        <div><label for="adminPass">Contraseña</label><input type="password" id="adminPass" autocomplete="current-password"></div>
+      </div>
+      <div class="fila" style="margin-top:14px;">
+        <button class="btn" id="btnLogin">Entrar</button>
+        <span class="muted" id="loginMsg"></span>
+      </div>
+    </div>
+
+    <div id="panel" hidden>
+      <div class="card">
+        <div class="card-h">
+          <div><h2 id="panelTitulo">Avance de digitación</h2><p class="sub" id="panelSub"></p></div>
+          <div class="fila">
+            <button class="btn sec sm" id="btnRefrescar">Actualizar</button>
+            <button class="btn sec sm" id="btnLogout">Cerrar sesión</button>
+          </div>
+        </div>
+        <div class="grid">
+          <div><label for="fCorte">Corte</label>
+            <select id="fCorte"><option value="I">I Corte</option><option value="II">II Corte</option><option value="III">III Corte</option><option value="IV">IV Corte</option></select></div>
+          <div><label for="fNucleo">Núcleo</label><select id="fNucleo"></select></div>
+          <div><label for="fEscuela">Escuela</label><select id="fEscuela"></select></div>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="fila">
+          <button class="btn" id="btnPadron">Descargar notas (Excel)</button>
+          <label class="check"><input type="checkbox" id="chkPendientes"> Incluir grupos pendientes en blanco</label>
+          <span class="muted" id="exportMsg"></span>
+        </div>
+        <div class="lista" id="listaPanel"><p class="empty">Cargando…</p></div>
+      </div>
+
+      <div class="card" id="agregadosCard" hidden>
+        <div class="card-h">
+          <div><h2>Estudiantes agregados por docentes</h2><p class="sub">No aparecen en el padrón oficial. Verifique cada caso y, si corresponde, actualice el padrón en el SIGEE.</p></div>
+          <button class="btn sec sm" id="btnCerrarAg">Cerrar</button>
+        </div>
+        <div class="lista" id="listaAgregados"></div>
+      </div>
+
+      <div class="card" id="detalleCard" hidden>
+        <div class="card-h">
+          <div><h2 id="detalleTitulo"></h2><p class="sub" id="detalleResumen"></p></div>
+          <div class="fila" id="detalleBotones"></div>
+        </div>
+        <div id="tablaDetalle"></div>
+        <div id="detalleMsg"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+'use strict';
+// ============================================================
+//  URL del Apps Script (Implementar > Aplicación web, termina en /exec)
+// ============================================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbyqtkdQ_9mMndBLKkZOE1SGmngaQGu3K3ni7NIb4k3iuJgiL7ZNh1E-XD6OtdJ1a5Y6dA/exec';
+
+// ============================================================
+//  Utilidades
+// ============================================================
+const el = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+const spin = t => `<span class="spin"></span>${esc(t)}`;
+const fechaTxt = ms => ms ? new Date(ms).toLocaleString('es-NI', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+const LS = {
+  get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+  set(k, v){
+    try{ localStorage.setItem(k, JSON.stringify(v)); }
+    catch(e){
+      try{ Object.keys(localStorage).filter(x => x.indexOf('rdc_esc_') === 0).forEach(x => localStorage.removeItem(x));
+           localStorage.setItem(k, JSON.stringify(v)); }catch(e2){}
+    }
+  },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+const SS = {
+  get(k){ try{ return JSON.parse(sessionStorage.getItem(k)); }catch(e){ return null; } },
+  set(k, v){ try{ sessionStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ sessionStorage.removeItem(k); }catch(e){} }
+};
+
+async function api(action, payload, intentos){
+  intentos = intentos == null ? 1 : intentos;
+  let res;
+  try{
+    res = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(Object.assign({action}, payload || {}))});
+  }catch(e){
+    if (intentos > 0){ await new Promise(r => setTimeout(r, 1200)); return api(action, payload, intentos - 1); }
+    throw new Error('Sin conexión a internet o el servidor no responde.');
+  }
+  const data = await res.json();
+  if (data && data.error) throw new Error(data.error);
+  return data;
+}
+
+function idGrupo(estab, prog, mod, niv, sec, turno){
+  return [estab, prog, mod, niv, sec, turno].join('_').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+function setOptions(sel, items, placeholder){
+  sel.innerHTML = (placeholder != null ? `<option value="">${esc(placeholder)}</option>` : '') +
+    items.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('');
+}
+
+// ============================================================
+//  Plan de estudios (CLASES_ACTUALIZADAS.xlsx)
+//  I semestre = I y II corte · II semestre = III y IV corte
+//  col = columna del padrón impreso donde se escribe la asignatura
+// ============================================================
+const MATERIAS = {
+  MAT:{l:'Matemática', x:'MAT'}, LYL:{l:'Lengua y Literatura', x:'LYL'}, INGLES:{l:'Inglés', x:'INGLES'},
+  EEFF:{l:'Educación Física', x:'EEFF', q:1},
+  AEP:{l:'Aprender, Emprender, Prosperar', x:'AEP', q:1}, CMM:{l:'Conociendo mi Mundo', x:'CMM', q:1},
+  CCNN:{l:'Ciencias Naturales', x:'CCNN'}, CCSS:{l:'Ciencias Sociales', x:'CCSS'},
+  QUIMICA:{l:'Química', x:'QUIMICA'}, FISICA:{l:'Física', x:'FISICA'}, BIOLOGIA:{l:'Biología', x:'BIOLOGIA'},
+  HIST:{l:'Historia', x:'HIST'}, GEOGRAFIA:{l:'Geografía', x:'GEOGRAFIA'}, SOCIOLOGIA:{l:'Sociología', x:'SOCIOLOGIA'},
+  ECONOMIA:{l:'Economía', x:'ECONOMIA'}, FILO:{l:'Filosofía', x:'FILO'}, VP:{l:'Vocación Productiva', x:'VP'},
+  TAC:{l:'Talleres de Arte y Cultura', x:'TAC', q:1}, CV:{l:'Creciendo en Valores', x:'CV', q:1},
+  DDM:{l:'Derechos y Dignidad de las Mujeres', x:'DDM', q:1}, EMPPROS:{l:'Emprendo y Prospero', x:'EMP Y PROS'},
+  AFPT:{l:'AFTP', x:'AFTP'}, MEDAMB:{l:'Medio Ambiente', x:'MED AMB'},
+  VAL:{l:'Valoración de los Aprendizajes', x:'VAL. APRENDI', q:1},
+  // Bachillerato comunitario de JyA
+  GEONIC:{l:'Geografía de Nicaragua', x:'GEO NIC', col:'GEOGRAFIA'}, HISNIC:{l:'Historia de Nicaragua', x:'HIST NIC', col:'HIST'},
+  QUIMINO:{l:'Química Inorgánica', x:'QUIM INORG', col:'QUIMICA'}, GEOCONT:{l:'Geografía de los Continentes', x:'GEO CONT', col:'GEOGRAFIA'},
+  HISUNIV:{l:'Historia Universal', x:'HIST UNIV', col:'HIST'}, QUIMORG:{l:'Química Orgánica', x:'QUIM ORG', col:'QUIMICA'},
+  FIS1:{l:'Física I', x:'FISICA I', col:'FISICA'}, FIS2:{l:'Física II', x:'FISICA II', col:'FISICA'},
+  FILOSOC:{l:'Filosofía y Sociología', x:'FILO Y SOC', col:'FILO'}
+};
+const W = s => s.split(' ');
+const IGUAL = s => [W(s), W(s)];
+const PLAN_ENCUENTRO = {
+  SEPTIMO:[W('MAT LYL INGLES CCSS DDM EMPPROS'), W('MAT LYL CCNN CCSS DDM EMPPROS')],
+  OCTAVO: [W('MAT LYL CCNN CCSS DDM EMPPROS'),   W('MAT LYL INGLES CCSS DDM EMPPROS')],
+  NOVENO: [W('MAT LYL INGLES CCSS DDM EMPPROS'), W('MAT LYL CCNN CCSS DDM EMPPROS')],
+  DECIMO: [W('MAT LYL CCSS QUIMICA DDM EMPPROS'), W('MAT LYL INGLES FISICA DDM EMPPROS')],
+  UNDECIMO:[W('MAT LYL INGLES BIOLOGIA DDM EMPPROS'), W('MAT LYL CCSS FISICA DDM EMPPROS')]
+};
+const CAMPO_BASICA = [W('MAT LYL INGLES CCNN GEOGRAFIA VP TAC DDM'), W('MAT LYL INGLES HIST VP TAC DDM')];
+const PLAN_CAMPO = {
+  SEPTIMO:CAMPO_BASICA, OCTAVO:CAMPO_BASICA, NOVENO:CAMPO_BASICA,
+  DECIMO:  [W('MAT LYL INGLES QUIMICA GEOGRAFIA VP DDM'),  W('MAT LYL INGLES FISICA ECONOMIA VP DDM')],
+  UNDECIMO:[W('MAT LYL INGLES BIOLOGIA SOCIOLOGIA VP DDM'), W('MAT LYL INGLES FISICA FILO VP DDM')]
+};
+const PLAN_REGULAR = {
+  SEPTIMO:IGUAL('MAT LYL INGLES EEFF AEP CCNN CCSS TAC CV DDM'),
+  OCTAVO: IGUAL('MAT LYL INGLES EEFF AEP CCNN CCSS TAC CV DDM'),
+  NOVENO: IGUAL('MAT LYL INGLES EEFF AEP CCNN CCSS TAC CV DDM'),
+  DECIMO: IGUAL('MAT LYL INGLES EEFF AEP CCSS QUIMICA FISICA CV DDM'),
+  UNDECIMO:IGUAL('MAT LYL INGLES EEFF AEP CCSS FISICA BIOLOGIA CV DDM')
+};
+const PRIM_BASICA = 'MAT LYL INGLES EEFF AEP CCNN CCSS TAC CV DDM';
+const PLAN_PRIMARIA = {
+  PRIMERO:[W('MAT LYL INGLES EEFF AEP TAC CV DDM'), W('MAT LYL INGLES EEFF AEP CMM TAC CV DDM')],
+  SEGUNDO:IGUAL('MAT LYL INGLES EEFF AEP CMM TAC CV DDM'),
+  TERCERO:IGUAL(PRIM_BASICA), CUARTO:IGUAL(PRIM_BASICA), QUINTO:IGUAL(PRIM_BASICA), SEXTO:IGUAL(PRIM_BASICA),
+  'III CICLO':IGUAL(PRIM_BASICA)                        // Primaria extraedad
+};
+const PLAN_COMUNITARIA = [W('MAT LYL CCNN DDM'), W('MAT LYL CCSS AFPT DDM')];   // I y II ciclo, y alfabetización
+const PLAN_III_CICLO = {'GRUPO A':IGUAL('MAT LYL INGLES DDM'), 'GRUPO B':IGUAL('MAT LYL CCNN CCSS')};
+const PLAN_IV_CICLO  = {'GRUPO A':IGUAL('MAT LYL INGLES DDM'), 'GRUPO B':IGUAL('MAT LYL QUIMICA FISICA BIOLOGIA ECONOMIA SOCIOLOGIA FILO')};
+const PLAN_BACH = {
+  '1ERO':[W('MAT LYL GEONIC CCNN INGLES DDM'), W('MAT LYL HISNIC QUIMINO INGLES DDM')],
+  '2DO': [W('MAT LYL GEOCONT QUIMORG INGLES DDM'), W('MAT LYL HISUNIV FIS1 INGLES')],
+  '3ERO':[W('MAT LYL GEOGRAFIA FIS2 INGLES'), W('MAT LYL FILOSOC BIOLOGIA INGLES')]
+};
+const NIV_BACH = {'1RO':'1ERO','1ERO':'1ERO','PRIMERO':'1ERO','2DO':'2DO','SEGUNDO':'2DO','3RO':'3ERO','3ERO':'3ERO','TERCERO':'3ERO'};
+
+const ESCALA = ['AI','AF','AS','AA'];        // Aprendizaje Iniciado / en Formación / Satisfactorio / Avanzado
+const ESCALA_PRE = ['AP','AA'];              // Aprendizaje en Proceso / Alcanzado
+
+function tipoDe(mod){
+  const m = norm(mod);
+  if (m.indexOf('PREESCOLAR') >= 0 || m === 'EDUCACION TEMPRANA') return 'PRE';
+  if (m === 'PRIMARIA COMUNITARIA JYA' || m === 'ALFABETIZACION') return 'COM';
+  if (m.indexOf('PRIM') === 0) return 'PRIM';
+  return 'SEC';
+}
+function esCuali(code, tipo, niv){
+  if (tipo === 'PRE') return true;
+  if (tipo === 'PRIM' && ['PRIMERO','SEGUNDO'].indexOf(norm(niv)) >= 0) return true;
+  return !!(MATERIAS[code] && MATERIAS[code].q);
+}
+function planDe(mod, niv, corte){
+  const tipo = tipoDe(mod), m = norm(mod), n = norm(niv);
+  const sem = (corte === 'I' || corte === 'II') ? 0 : 1;
+  let par;
+  if (tipo === 'PRE') par = IGUAL('VAL');
+  else if (tipo === 'COM') par = PLAN_COMUNITARIA;
+  else if (tipo === 'PRIM') par = PLAN_PRIMARIA[n] || IGUAL(PRIM_BASICA);
+  else if (m === 'III CICLO') par = PLAN_III_CICLO[n] || PLAN_III_CICLO['GRUPO A'];
+  else if (m === 'IV CICLO') par = PLAN_IV_CICLO[n] || PLAN_IV_CICLO['GRUPO A'];
+  else if (m === 'BACHILLERATO COMUNITARIO DE JYA') par = PLAN_BACH[NIV_BACH[n]] || PLAN_BACH['3ERO'];
+  else if (m === 'SECUNDARIA EN EL CAMPO') par = PLAN_CAMPO[n] || PLAN_CAMPO.SEPTIMO;
+  else if (m === 'SECUNDARIA REGULAR') par = PLAN_REGULAR[n] || PLAN_REGULAR.SEPTIMO;
+  else par = PLAN_ENCUENTRO[n] || PLAN_ENCUENTRO.SEPTIMO;
+  return planDeCodigos(par[sem], mod, niv);
+}
+function planDeCodigos(codes, mod, niv){
+  const tipo = tipoDe(mod);
+  const materias = codes.map(c => ({code:c, l:(MATERIAS[c] || {l:c}).l, x:(MATERIAS[c] || {x:c}).x, q:esCuali(c, tipo, niv)}));
+  return {tipo, materias, escala: tipo === 'PRE' ? ESCALA_PRE : ESCALA, prom: materias.some(s => !s.q)};
+}
+
+const ORD_PROG = ['EDUCACION INICIAL','PRIMARIA','SECUNDARIA','EDUCACION ESPECIAL','ALFABETIZACION'];
+const ORD_NIV = ['PRIMERO','SEGUNDO','TERCERO','CUARTO','QUINTO','SEXTO','I CICLO','II CICLO','III CICLO','SEPTIMO','OCTAVO','NOVENO','DECIMO','UNDECIMO','GRUPO A','GRUPO B','1ERO','1RO','2DO','3ERO','3RO','SIN NIVEL'];
+const ORD_TURNO = ['MATUTINO','VESPERTINO','NOCTURNO','SABATINO','DOMINICAL'];
+const idxOr = (arr, v) => { const i = arr.indexOf(norm(v)); return i < 0 ? 99 : i; };
+function cmpGrupo(a, b){
+  return idxOr(ORD_PROG, a.programa) - idxOr(ORD_PROG, b.programa) || String(a.modalidad).localeCompare(b.modalidad)
+    || idxOr(ORD_NIV, a.nivel) - idxOr(ORD_NIV, b.nivel) || String(a.seccion).localeCompare(b.seccion)
+    || idxOr(ORD_TURNO, a.turno) - idxOr(ORD_TURNO, b.turno);
+}
+// Orden alfabético por nombre: primer nombre, segundo nombre, apellidos
+const claveEst = s => norm([s.n1, s.n2, s.a1, s.a2].join(' '));
+const cmpEst = (a, b) => claveEst(a).localeCompare(claveEst(b), 'es');
+const apellidos = s => [s.a1, s.a2].filter(Boolean).join(' ');
+const nombres = s => [s.n1, s.n2].filter(Boolean).join(' ');
+const grupoTxt = g => `${g.modalidad} · ${g.nivel} "${g.seccion}" · ${g.turno}`;
+
+// ============================================================
+//  Tabla de notas
+// ============================================================
+function promedio(plan, vals){
+  const nums = plan.materias.filter(s => !s.q).map(s => parseFloat(vals[s.code])).filter(n => !isNaN(n));
+  return nums.length ? Math.round(nums.reduce((a, b) => a + b, 0) / nums.length * 10) / 10 : '';
+}
+
+/** valores: {cp:{code:val}} (se modifica) · tocados: {cp:{code:val}} casillas cambiadas */
+function renderNotas(cont, plan, estudiantes, valores, editable, onChange, tocados){
+  const subs = plan.materias;
+  tocados = tocados || {};
+  let h = '<div class="tablewrap"><table class="notas"><colgroup><col class="c-n"><col class="c-name">' +
+    '<col class="c-g">'.repeat(subs.length) + (plan.prom ? '<col class="c-p">' : '') + '</colgroup><thead><tr>' +
+    '<th class="num-col">N.º</th><th class="nombre-col">Estudiante<br><span>Nombres y apellidos</span></th>' +
+    subs.map(s => `<th title="${esc(s.l)}"><b>${esc(s.x === 'VAL. APRENDI' ? 'VAL' : s.x)}</b>${esc(s.l === s.x ? '' : s.l)}</th>`).join('') +
+    (plan.prom ? '<th><b>PROM.</b></th>' : '') + '</tr></thead><tbody>';
+  const opts = ['<option value="">—</option>'].concat(plan.escala.map(o => `<option>${o}</option>`)).join('');
+  estudiantes.forEach((s, i) => {
+    const v = valores[s.cp] || (valores[s.cp] = {});
+    const t = tocados[s.cp] || {};
+    h += `<tr${s.ag ? ' class="ag"' : ''}><td class="num-col">${i + 1}</td><td class="nombre-col">${esc(nombres(s))} <span>${esc(apellidos(s))}</span>` +
+      (s.ag ? `<em class="tag" title="Agregado por el docente; no está en el padrón">Agregado ${esc(cpAgregado(s.cp))}</em>${editable && onChange ? `<button class="lnk" data-quitar="${esc(s.cp)}">Quitar</button>` : ''}` : '') + '</td>';
+    subs.forEach(sub => {
+      const val = v[sub.code] == null ? '' : String(v[sub.code]);
+      const baja = !sub.q && val !== '' && Number(val) < 60;
+      const mod = sub.code in t ? ' mod' : '';
+      h += `<td data-label="${esc(sub.l)}">`;
+      if (!editable) h += `<span class="rv${baja ? ' baja' : ''}">${val === '' ? '—' : esc(val)}</span>`;
+      else if (sub.q) h += `<select class="qs${mod}" data-cp="${esc(s.cp)}" data-c="${sub.code}">${opts.replace(`<option>${val}</option>`, `<option selected>${val}</option>`)}</select>`;
+      else h += `<input class="gi${baja ? ' baja' : ''}${mod}" inputmode="numeric" maxlength="3" autocomplete="off" data-cp="${esc(s.cp)}" data-c="${sub.code}" value="${esc(val)}">`;
+      h += '</td>';
+    });
+    if (plan.prom){
+      const p = promedio(plan, v);
+      h += `<td data-label="Promedio" class="prom${p !== '' && p < 60 ? ' baja' : ''}" data-p="${esc(s.cp)}">${p}</td>`;
+    }
+    h += '</tr>';
+  });
+  if (!estudiantes.length) h += `<tr><td colspan="${subs.length + 3}"><div class="empty">No hay estudiantes en este grupo.</div></td></tr>`;
+  cont.innerHTML = h + '</tbody></table></div>';
+  cont._ctx = {plan, valores, onChange, tocados};
+  if (!cont._wired){
+    cont._wired = true;
+    const handler = e => {
+      const t = e.target, ctx = cont._ctx;
+      if (!t.dataset || !t.dataset.cp) return;
+      if (t.classList.contains('gi')){
+        let v = t.value.replace(/\D/g, '').slice(0, 3);
+        if (v !== '' && Number(v) > 100) v = '100';
+        if (v !== t.value) t.value = v;
+        t.classList.toggle('baja', v !== '' && Number(v) < 60);
+      }
+      const cp = t.dataset.cp, c = t.dataset.c;
+      (ctx.valores[cp] || (ctx.valores[cp] = {}))[c] = t.value;
+      (ctx.tocados[cp] || (ctx.tocados[cp] = {}))[c] = t.value;
+      t.classList.add('mod');
+      if (ctx.plan.prom){
+        const pc = cont.querySelector(`td[data-p="${CSS.escape(cp)}"]`);
+        if (pc){ const p = promedio(ctx.plan, ctx.valores[cp]); pc.textContent = p; pc.classList.toggle('baja', p !== '' && p < 60); }
+      }
+      if (ctx.onChange) ctx.onChange();
+    };
+    cont.addEventListener('input', handler);
+    cont.addEventListener('change', e => { if (e.target.tagName === 'SELECT') handler(e); });
+    // Enter o flechas: siguiente estudiante en la misma asignatura
+    cont.addEventListener('keydown', e => {
+      const t = e.target;
+      if (!t.dataset || !t.dataset.c) return;
+      const abajo = e.key === 'Enter' || (e.key === 'ArrowDown' && t.tagName === 'INPUT');
+      const arriba = e.key === 'ArrowUp' && t.tagName === 'INPUT';
+      if (!abajo && !arriba) return;
+      const col = [...cont.querySelectorAll(`[data-c="${t.dataset.c}"]`)];
+      const sig = col[col.indexOf(t) + (abajo ? 1 : -1)];
+      if (sig){ e.preventDefault(); sig.focus(); if (sig.select) sig.select(); }
+    });
+  }
+}
+const contarTocados = t => Object.values(t || {}).reduce((a, o) => a + Object.keys(o).length, 0);
+function contarVacios(plan, estudiantes, valores){
+  let n = 0;
+  estudiantes.forEach(s => plan.materias.forEach(sub => { const v = (valores[s.cp] || {})[sub.code]; if (v == null || v === '') n++; }));
+  return n;
+}
+function docAValores(doc){
+  const valores = {};
+  const est = (doc.e || []).map(r => {
+    valores[r[0]] = {};
+    (doc.m || []).forEach((c, i) => { const v = (r[5] || [])[i]; valores[r[0]][c] = v == null ? '' : v; });
+    return {cp:r[0], n1:r[1], n2:r[2], a1:r[3], a2:r[4], ag:(doc.a || []).indexOf(r[0]) >= 0};
+  });
+  return {est: est.sort(cmpEst), valores};
+}
+
+// ============================================================
+//  DOCENTE
+// ============================================================
+const D = {corte:'III', anio:'', v:null, centros:[], esc:null, guardados:{}, guardProm:null,
+  grupo:null, plan:null, est:[], valores:{}, tocados:{}, token:0, guardando:false};
+const nucleoSel = el('nucleo'), escuelaSel = el('escuela'), grupoSel = el('grupo');
+const codigos = () => LS.get('rdc_codigos') || {};
+const codigoDe = nuc => codigos()[nuc] || '';
+
+el('docente').value = LS.get('rdc_docente') || '';
+el('docente').addEventListener('change', () => LS.set('rdc_docente', el('docente').value.trim()));
+
+function aplicarInit(d){
+  D.v = d.v; D.corte = d.corte; D.anio = d.anio; D.centros = d.centros || [];
+  el('corteBadge').textContent = `${D.corte} Corte · ${D.anio}`;
+  el('subtitulo').textContent = `Digitación del ${D.corte} corte (${['I','II'].indexOf(D.corte) >= 0 ? 'I' : 'II'} semestre). Seleccione su núcleo, escriba el código de acceso del NER y elija el grupo.`;
+  const previo = nucleoSel.value || (LS.get('rdc_ult') || {}).nucleo || '';
+  const nucleos = [...new Set(D.centros.map(c => c.u).filter(Boolean))].sort();
+  setOptions(nucleoSel, nucleos.map(n => ({value:n, label:n})), 'Seleccione…');
+  if (nucleos.indexOf(previo) >= 0){ nucleoSel.value = previo; alCambiarNucleo(true); }
+}
+
+async function init(){
+  const cache = LS.get('rdc_init');
+  if (cache) aplicarInit(cache);
+  else el('loadmsg').innerHTML = spin('Conectando con el servidor…');
+  try{
+    const d = await api('init');
+    LS.set('rdc_init', d);
+    if (!cache || cache.v !== d.v || cache.corte !== d.corte || (cache.centros || []).length !== d.centros.length) aplicarInit(d);
+    if (!cache) el('loadmsg').textContent = '';
+  }catch(e){
+    el('loadmsg').innerHTML = `<span style="color:var(--danger)">${cache ? 'Se muestran los datos guardados en este equipo. ' : ''}No se pudo conectar: ${esc(e.message)}</span>`;
+  }
+}
+
+function pedirCodigo(msg){
+  el('boxCodigo').hidden = false; el('boxEscuela').hidden = true;
+  escuelaSel.disabled = true; grupoSel.disabled = true;
+  setOptions(grupoSel, [], 'Seleccione la escuela');
+  el('codigo').value = '';
+  el('loadmsg').innerHTML = msg ? `<span style="color:var(--danger)">${esc(msg)}</span>` : 'Escriba el código de acceso que le entregó la dirección de su NER.';
+  ocultarTabla();
+}
+
+function alCambiarNucleo(restaurar){
+  const nuc = nucleoSel.value;
+  ocultarTabla();
+  grupoSel.disabled = true; setOptions(grupoSel, [], 'Seleccione la escuela');
+  if (!nuc){ el('boxCodigo').hidden = true; el('boxEscuela').hidden = false; escuelaSel.disabled = true; setOptions(escuelaSel, [], 'Seleccione el núcleo'); return; }
+  if (!codigoDe(nuc)) return pedirCodigo();
+  el('boxCodigo').hidden = true; el('boxEscuela').hidden = false; el('loadmsg').textContent = '';
+  llenarEscuelas(restaurar);
+}
+nucleoSel.addEventListener('change', () => alCambiarNucleo(false));
+
+async function verificarCodigo(){
+  const nuc = nucleoSel.value, codigo = el('codigo').value.trim();
+  if (!nuc || !codigo) return;
+  el('btnCodigo').disabled = true; el('loadmsg').innerHTML = spin('Verificando código…');
+  try{
+    const r = await api('acceso', {nucleo:nuc, codigo});
+    if (!r.ok){ el('loadmsg').innerHTML = '<span style="color:var(--danger)">Código incorrecto para este núcleo.</span>'; return; }
+    const c = codigos(); c[nuc] = codigo; LS.set('rdc_codigos', c);
+    alCambiarNucleo(false);
+  }catch(e){ el('loadmsg').innerHTML = `<span style="color:var(--danger)">${esc(e.message)}</span>`; }
+  finally{ el('btnCodigo').disabled = false; }
+}
+el('btnCodigo').addEventListener('click', verificarCodigo);
+el('codigo').addEventListener('keydown', e => { if (e.key === 'Enter') verificarCodigo(); });
+
+function codigoRechazado(){
+  const nuc = nucleoSel.value, c = codigos(); delete c[nuc]; LS.set('rdc_codigos', c);
+  pedirCodigo('El código de acceso cambió o no es válido. Escríbalo de nuevo.');
+}
+
+function llenarEscuelas(restaurar){
+  const nuc = nucleoSel.value;
+  const lista = D.centros.filter(c => c.u === nuc).sort((a, b) => a.n.localeCompare(b.n))
+    .map(c => ({value:c.e, label:`${c.n} (${c.e})`}));
+  setOptions(escuelaSel, lista, 'Seleccione…');
+  escuelaSel.disabled = false;
+  const ult = LS.get('rdc_ult') || {};
+  if (restaurar && lista.some(o => o.value === ult.estab)){ escuelaSel.value = ult.estab; cargarEscuela(); }
+  else if (lista.length === 1){ escuelaSel.value = lista[0].value; cargarEscuela(); }
+}
+escuelaSel.addEventListener('change', cargarEscuela);
+
+function cargarEscuela(){
+  const estab = escuelaSel.value, nuc = nucleoSel.value;
+  const tok = ++D.token;
+  ocultarTabla();
+  D.esc = null; D.guardados = {}; D.guardProm = null;
+  if (!estab){ grupoSel.disabled = true; setOptions(grupoSel, [], 'Seleccione la escuela'); return; }
+  LS.set('rdc_ult', {nucleo:nuc, estab});
+  const cache = LS.get('rdc_esc_' + estab);
+  if (cache && cache.v === D.v){ D.esc = cache; llenarGrupos(); el('loadmsg').innerHTML = spin('Consultando grupos con notas…'); }
+  else { grupoSel.disabled = true; setOptions(grupoSel, [], 'Cargando…'); el('loadmsg').innerHTML = spin('Cargando estudiantes de la escuela…'); }
+
+  D.guardProm = api('escuela', {estab, corte:D.corte, codigo:codigoDe(nuc), v: cache ? cache.v : ''}).then(d => {
+    if (tok !== D.token) return;
+    if (d.datos){ D.esc = {estab, v:d.v, g:d.datos.g, s:d.datos.s}; LS.set('rdc_esc_' + estab, D.esc); }
+    else if (!D.esc && cache) D.esc = cache;
+    D.guardados = {};
+    (d.guardados || []).forEach(m => D.guardados[m.id] = m);
+    el('loadmsg').textContent = '';
+    llenarGrupos();
+  }).catch(e => {
+    if (tok !== D.token) return;
+    if (/código de acceso/i.test(e.message)) return codigoRechazado();
+    el('loadmsg').innerHTML = `<span style="color:var(--danger)">Error al cargar la escuela: ${esc(e.message)}</span>`;
+    if (!D.esc) setOptions(grupoSel, [], 'Error: vuelva a seleccionar la escuela');
+  });
+}
+
+function gruposEscuela(){
+  if (!D.esc) return [];
+  const cnt = D.esc.g.map(() => 0);
+  D.esc.s.forEach(s => cnt[s[0]]++);
+  return D.esc.g.map((g, i) => {
+    const o = {gi:i, programa:g[0], modalidad:g[1], nivel:g[2], seccion:g[3], turno:g[4], n:cnt[i]};
+    o.id = idGrupo(D.esc.estab, o.programa, o.modalidad, o.nivel, o.seccion, o.turno);
+    return o;
+  }).sort(cmpGrupo);
+}
+
+function llenarGrupos(){
+  const prev = grupoSel.value;
+  const lista = gruposEscuela();
+  setOptions(grupoSel, lista.map(g => ({value:g.gi,
+    label:`${grupoTxt(g)} (${g.n} est.)${D.guardados[g.id] ? '  — con notas' : ''}`})),
+    lista.length ? `Seleccione… (${lista.length} grupos)` : 'Sin estudiantes en el padrón');
+  grupoSel.disabled = !lista.length;
+  if (prev !== '' && lista.some(g => String(g.gi) === prev)) grupoSel.value = prev;
+  else if (lista.length === 1){ grupoSel.value = lista[0].gi; abrirGrupo(); }
+}
+grupoSel.addEventListener('change', () => {
+  if (D.grupo && contarTocados(D.tocados)) LS.set(`rdc_borrador_${D.corte}_${D.grupo.id}`, D.tocados);
+  abrirGrupo();
+});
+
+function ocultarTabla(){ el('tablaCard').hidden = true; D.grupo = null; D.tocados = {}; }
+
+async function abrirGrupo(){
+  const gi = grupoSel.value;
+  if (gi === '' || !D.esc){ ocultarTabla(); return; }
+  const g = gruposEscuela().find(x => String(x.gi) === gi);
+  D.grupo = g; D.tocados = {};
+  D.plan = planDe(g.modalidad, g.nivel, D.corte);
+  D.est = D.esc.s.filter(s => s[0] === g.gi).map(s => ({cp:s[1], n1:s[2], n2:s[3], a1:s[4], a2:s[5]})).sort(cmpEst);
+  el('tablaCard').hidden = false;
+  el('resumenGrupo').innerHTML = `<b>${esc(grupoTxt(g))}</b> · ${esc(g.programa)} · ${D.est.length} estudiante${D.est.length === 1 ? '' : 's'} · ${D.plan.materias.length} asignatura${D.plan.materias.length === 1 ? '' : 's'}`;
+  el('saveMsg').innerHTML = ''; el('statusText').textContent = '';
+  el('btnGuardar').disabled = true; cerrarAgregar();
+  el('tablaDocente').innerHTML = `<div class="empty">${spin('Cargando notas del grupo…')}</div>`;
+
+  if (D.guardProm){ try{ await D.guardProm; }catch(e){} }
+  if (D.grupo !== g) return;
+  D.valores = {};
+  if (D.guardados[g.id]){
+    let doc = null;
+    try{ doc = (await api('grupo', {corte:D.corte, id:g.id, codigo:codigoDe(nucleoSel.value)})).doc; }
+    catch(e){
+      if (/código de acceso/i.test(e.message)) return codigoRechazado();
+      el('tablaDocente').innerHTML = `<div class="msg err">No se pudieron cargar las notas guardadas: ${esc(e.message)}</div>`;
+      return;
+    }
+    if (D.grupo !== g) return;
+    if (doc){ aplicarDoc(doc); D.guardados[g.id] = Object.assign(D.guardados[g.id], {docente:doc.docente, actualizado:doc.actualizado}); }
+  }
+  D.tocados = LS.get(`rdc_borrador_${D.corte}_${g.id}`) || {};
+  pintarTabla();
+  el('btnGuardar').disabled = false;
+  if (contarTocados(D.tocados)) el('saveMsg').innerHTML = '<div class="msg warn">Se recuperaron cambios que no se habían guardado en este equipo. Revíselos y presione Guardar notas.</div>';
+}
+
+/** Toma las notas del registro y agrega a la lista los estudiantes que no vienen del padrón. */
+function aplicarDoc(doc){
+  const r = docAValores(doc);
+  D.valores = r.valores;
+  const enLista = {};
+  D.est = D.est.filter(s => !s.ag);
+  D.est.forEach(s => enLista[s.cp] = true);
+  r.est.forEach(s => { if (!enLista[s.cp]) D.est.push(s); });
+  D.est.sort(cmpEst);
+}
+function pintarTabla(){
+  Object.keys(D.tocados).forEach(cp => Object.keys(D.tocados[cp]).forEach(c => (D.valores[cp] || (D.valores[cp] = {}))[c] = D.tocados[cp][c]));
+  renderNotas(el('tablaDocente'), D.plan, D.est, D.valores, true, alCambiarNotas, D.tocados);
+  el('resumenGrupo').innerHTML = `<b>${esc(grupoTxt(D.grupo))}</b> · ${esc(D.grupo.programa)} · ${D.est.length} estudiante${D.est.length === 1 ? '' : 's'} · ${D.plan.materias.length} asignatura${D.plan.materias.length === 1 ? '' : 's'}`;
+  actualizarEstado();
+}
+
+// ---- Agregar estudiante que no está en el padrón ----
+const camposNuevo = ['nA1','nA2','nN1','nN2','nCp'];
+el('btnMostrarAgregar').addEventListener('click', () => {
+  el('formAgregar').hidden = false; el('btnMostrarAgregar').hidden = true; el('agregarMsg').innerHTML = ''; el('nA1').focus();
+});
+function cerrarAgregar(){
+  el('formAgregar').hidden = true; el('btnMostrarAgregar').hidden = false;
+  camposNuevo.forEach(i => el(i).value = ''); el('btnAgregar').dataset.ok = ''; el('btnAgregar').textContent = 'Agregar al grupo';
+}
+el('btnCancelarAgregar').addEventListener('click', cerrarAgregar);
+camposNuevo.forEach(i => el(i).addEventListener('input', () => { el('btnAgregar').dataset.ok = ''; el('btnAgregar').textContent = 'Agregar al grupo'; }));
+
+async function guardarEnServidor(extra){
+  const g = D.grupo;
+  const r = await api('guardar', Object.assign({corte:D.corte, docente:el('docente').value.trim(), codigo:codigoDe(nucleoSel.value),
+    grupo:{estab:D.esc.estab, programa:g.programa, modalidad:g.modalidad, nivel:g.nivel, seccion:g.seccion, turno:g.turno},
+    materias:D.plan.materias.map(s => s.code), cambios:{}}, extra), 0);
+  D.guardados[g.id] = {id:g.id, docente:r.doc.docente, actualizado:r.doc.actualizado};
+  return r.doc;
+}
+
+el('btnAgregar').addEventListener('click', async () => {
+  const msg = el('agregarMsg'), b = el('btnAgregar'), g = D.grupo;
+  const v = id => el(id).value.trim().toUpperCase().replace(/\s+/g, ' ');
+  const nuevo = {a1:v('nA1'), a2:v('nA2'), n1:v('nN1'), n2:v('nN2'), cp:v('nCp').replace(/[^A-Z0-9]/g, '')};
+  if (!nuevo.a1 || !nuevo.n1){ msg.innerHTML = '<div class="msg err">Escriba al menos el primer apellido y el primer nombre.</div>'; return; }
+  if (!el('docente').value.trim()){ msg.innerHTML = '<div class="msg err">Escriba su nombre en "Nombre del docente" (arriba) antes de agregar.</div>'; return; }
+  const grupos = gruposEscuela();
+  const dondeEsta = cp => { const s = D.esc.s.find(x => x[1] === cp); if (!s) return null; const gg = grupos.find(x => x.gi === s[0]); return gg ? grupoTxt(gg) : 'otro grupo'; };
+  if (nuevo.cp){
+    if (D.est.some(s => s.cp === nuevo.cp)){ msg.innerHTML = '<div class="msg err">Ese código de persona ya está en este grupo.</div>'; return; }
+    const otro = dondeEsta(nuevo.cp);
+    if (otro){ msg.innerHTML = `<div class="msg err">Ese código de persona ya está en el padrón de esta escuela, en el grupo ${esc(otro)}. Pida a estadística que corrija el padrón.</div>`; return; }
+  }
+  if (!b.dataset.ok){
+    const clave = norm(nuevo.a1 + ' ' + nuevo.n1);
+    const igualGrupo = D.est.find(s => norm(s.a1 + ' ' + s.n1) === clave);
+    const igualEsc = !igualGrupo && D.esc.s.find(x => norm(x[4] + ' ' + x[2]) === clave);
+    if (igualGrupo || igualEsc){
+      b.dataset.ok = '1'; b.textContent = 'Sí, agregar de todos modos';
+      const quien = igualGrupo ? `${nombres(igualGrupo)} ${apellidos(igualGrupo)} en este mismo grupo` :
+        `${[igualEsc[2], igualEsc[3], igualEsc[4], igualEsc[5]].filter(Boolean).join(' ')} en el grupo ${dondeEsta(igualEsc[1])}`;
+      msg.innerHTML = `<div class="msg warn">Ya existe un estudiante parecido: <b>${esc(quien)}</b>. Revise que no sea el mismo antes de agregarlo.</div>`;
+      return;
+    }
+  }
+  b.disabled = true; msg.innerHTML = `<div class="msg ok">${spin('Agregando…')}</div>`;
+  try{
+    const doc = await guardarEnServidor({nuevos:[nuevo]});
+    if (D.grupo !== g) return;
+    aplicarDoc(doc); pintarTabla(); llenarGrupos();
+    cerrarAgregar();
+    el('saveMsg').innerHTML = `<div class="msg ok">Se agregó a ${esc(nuevo.n1)} ${esc(nuevo.a1)} al grupo. Ya puede digitar sus notas en la tabla.</div>`;
+  }catch(e){
+    if (/código de acceso/i.test(e.message)) return codigoRechazado();
+    msg.innerHTML = `<div class="msg err">No se agregó: ${esc(e.message)}</div>`;
+  }finally{ b.disabled = false; }
+});
+
+el('tablaDocente').addEventListener('click', async e => {
+  const b = e.target.closest('[data-quitar]');
+  if (!b) return;
+  const cp = b.dataset.quitar, g = D.grupo;
+  if (!b.dataset.ok){ b.dataset.ok = '1'; b.textContent = '¿Quitar? Clic otra vez'; setTimeout(() => { if (b.isConnected){ b.dataset.ok = ''; b.textContent = 'Quitar'; } }, 4000); return; }
+  b.disabled = true; b.textContent = 'Quitando…';
+  try{
+    const doc = await guardarEnServidor({quitar:[cp]});
+    if (D.grupo !== g) return;
+    delete D.tocados[cp];
+    if (contarTocados(D.tocados)) LS.set(`rdc_borrador_${D.corte}_${g.id}`, D.tocados); else LS.del(`rdc_borrador_${D.corte}_${g.id}`);
+    aplicarDoc(doc); pintarTabla();
+    el('saveMsg').innerHTML = '<div class="msg ok">Estudiante quitado del grupo.</div>';
+  }catch(err){
+    b.disabled = false; b.textContent = 'Quitar';
+    el('saveMsg').innerHTML = `<div class="msg err">No se pudo quitar: ${esc(err.message)}</div>`;
+  }
+});
+
+let tBorrador = null;
+function alCambiarNotas(){
+  actualizarEstado();
+  clearTimeout(tBorrador);
+  const clave = `rdc_borrador_${D.corte}_${D.grupo.id}`, t = D.tocados;
+  tBorrador = setTimeout(() => LS.set(clave, t), 400);
+}
+function actualizarEstado(){
+  const total = D.est.length * D.plan.materias.length;
+  const vac = contarVacios(D.plan, D.est, D.valores), pend = contarTocados(D.tocados);
+  const meta = D.guardados[D.grupo.id];
+  let t = `${total - vac} de ${total} casillas con nota`;
+  if (pend) t += ` · ${pend} cambio${pend === 1 ? '' : 's'} sin guardar`;
+  else if (meta) t += ` · última actualización ${fechaTxt(meta.actualizado)}${meta.docente ? ' por ' + meta.docente : ''}`;
+  el('statusText').textContent = t;
+}
+
+el('btnGuardar').addEventListener('click', async () => {
+  const docente = el('docente').value.trim();
+  const g = D.grupo, saveMsg = el('saveMsg'), btn = el('btnGuardar');
+  if (!g || D.guardando) return;
+  if (!docente){ saveMsg.innerHTML = '<div class="msg err">Escriba su nombre en el campo "Nombre del docente" antes de guardar.</div>'; el('docente').focus(); return; }
+  const pend = contarTocados(D.tocados);
+  if (!pend){ saveMsg.innerHTML = '<div class="msg ok">No hay cambios pendientes por guardar.</div>'; return; }
+  LS.set('rdc_docente', docente);
+  const enviados = JSON.parse(JSON.stringify(D.tocados));
+  D.guardando = true; btn.disabled = true; el('statusText').innerHTML = spin('Guardando…'); saveMsg.innerHTML = '';
+  try{
+    const r = await api('guardar', {corte:D.corte, docente, codigo:codigoDe(nucleoSel.value),
+      grupo:{estab:D.esc.estab, programa:g.programa, modalidad:g.modalidad, nivel:g.nivel, seccion:g.seccion, turno:g.turno},
+      materias:D.plan.materias.map(s => s.code), cambios:enviados}, 0);
+    const doc = r.doc;
+    D.guardados[g.id] = {id:g.id, docente:doc.docente, actualizado:doc.actualizado};
+    // lo escrito mientras se guardaba queda pendiente
+    Object.keys(enviados).forEach(cp => Object.keys(enviados[cp]).forEach(c => {
+      if (D.tocados[cp] && D.tocados[cp][c] === enviados[cp][c]) delete D.tocados[cp][c];
+    }));
+    Object.keys(D.tocados).forEach(cp => { if (!Object.keys(D.tocados[cp]).length) delete D.tocados[cp]; });
+    if (contarTocados(D.tocados)) LS.set(`rdc_borrador_${D.corte}_${g.id}`, D.tocados); else LS.del(`rdc_borrador_${D.corte}_${g.id}`);
+    if (D.grupo === g){
+      aplicarDoc(doc); pintarTabla();
+      saveMsg.innerHTML = `<div class="msg ok">Notas guardadas correctamente (${pend} casilla${pend === 1 ? '' : 's'}). Puede seguir editando cuando lo necesite.</div>`;
+    }
+    llenarGrupos();
+  }catch(e){
+    el('statusText').textContent = '';
+    if (/código de acceso/i.test(e.message)) codigoRechazado();
+    else saveMsg.innerHTML = `<div class="msg err">No se guardó: ${esc(e.message)}. Sus cambios siguen en este equipo; intente de nuevo cuando tenga conexión.</div>`;
+  }finally{ D.guardando = false; btn.disabled = false; }
+});
+
+window.addEventListener('beforeunload', e => {
+  if (D.grupo && contarTocados(D.tocados)){ LS.set(`rdc_borrador_${D.corte}_${D.grupo.id}`, D.tocados); e.preventDefault(); e.returnValue = ''; }
+});
+
+// ============================================================
+//  DIRECCIÓN
+// ============================================================
+const R = {user:null, corte:'III', data:null, grupos:[], guard:{}, centros:{}};
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
+  el('vistaDocente').hidden = t.dataset.vista !== 'docente';
+  el('vistaDireccion').hidden = t.dataset.vista !== 'direccion';
+  if (t.dataset.vista === 'direccion' && R.user && !R.data) cargarResumen();
+}));
+
+const cred = () => ({usuario:R.user.usuario, clave:R.user.clave});
+
+el('btnLogin').addEventListener('click', login);
+el('adminPass').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+async function login(){
+  const usuario = el('adminUser').value.trim(), clave = el('adminPass').value, msg = el('loginMsg');
+  if (!usuario || !clave){ msg.innerHTML = '<span style="color:var(--danger)">Escriba usuario y contraseña.</span>'; return; }
+  msg.innerHTML = spin('Verificando…');
+  try{
+    const r = await api('login', {usuario, clave});
+    if (!r.ok){ msg.innerHTML = '<span style="color:var(--danger)">Usuario o contraseña incorrectos.</span>'; return; }
+    msg.textContent = '';
+    R.user = {usuario, clave, rol:r.rol, alcance:r.alcance, nombre:r.nombre};
+    SS.set('rdc_sesion', R.user);
+    entrarPanel(true);
+  }catch(e){ msg.innerHTML = `<span style="color:var(--danger)">No se pudo verificar: ${esc(e.message)}</span>`; }
+}
+function entrarPanel(cargar){
+  el('loginCard').hidden = true; el('panel').hidden = false;
+  el('panelSub').textContent = `${R.user.nombre || R.user.usuario} · ${R.user.rol === 'ADMIN' ? 'Administrador (puede corregir notas)' : 'Dirección (solo consulta)'}`;
+  R.corte = el('fCorte').value = (LS.get('rdc_init') || {}).corte || D.corte;
+  if (cargar) cargarResumen();
+  setTimeout(() => cargarExcelJS().catch(() => {}), 1500);
+}
+el('btnLogout').addEventListener('click', () => {
+  SS.del('rdc_sesion'); R.user = null; R.data = null;
+  el('loginCard').hidden = false; el('panel').hidden = true; el('detalleCard').hidden = true;
+  el('adminUser').value = ''; el('adminPass').value = '';
+});
+el('btnRefrescar').addEventListener('click', cargarResumen);
+el('fCorte').addEventListener('change', () => { R.corte = el('fCorte').value; el('detalleCard').hidden = true; el('agregadosCard').hidden = true; cargarResumen(); });
+el('fNucleo').addEventListener('change', () => { llenarFiltroEscuelas(); renderPanel(); });
+el('fEscuela').addEventListener('change', renderPanel);
+
+async function cargarResumen(){
+  el('listaPanel').innerHTML = `<p class="empty">${spin('Cargando avance del ' + R.corte + ' corte…')}</p>`;
+  try{
+    const d = await api('resumen', Object.assign(cred(), {corte:R.corte}));
+    R.data = d;
+    R.centros = {}; d.centros.forEach(c => R.centros[c.e] = c);
+    R.guard = {}; d.guardados.forEach(m => R.guard[m.id] = m);
+    R.grupos = d.grupos.map(g => ({estab:g[0], programa:g[1], modalidad:g[2], nivel:g[3], seccion:g[4], turno:g[5], n:g[6],
+      id:idGrupo(g[0], g[1], g[2], g[3], g[4], g[5])}));
+    const nucleos = [...new Set(d.centros.map(c => c.u))].sort();
+    const prev = el('fNucleo').value;
+    setOptions(el('fNucleo'), nucleos.map(n => ({value:n, label:n})), nucleos.length > 1 ? 'Todos los núcleos' : null);
+    if (nucleos.indexOf(prev) >= 0) el('fNucleo').value = prev;
+    llenarFiltroEscuelas(true);
+    renderPanel();
+  }catch(e){
+    if (/No autorizado/.test(e.message)){ el('btnLogout').click(); el('loginMsg').innerHTML = '<span style="color:var(--danger)">La sesión expiró o la contraseña cambió.</span>'; return; }
+    el('listaPanel').innerHTML = `<p class="empty" style="color:var(--danger)">Error: ${esc(e.message)}</p>`;
+  }
+}
+function llenarFiltroEscuelas(mantener){
+  const nuc = el('fNucleo').value, prev = el('fEscuela').value;
+  const lista = Object.values(R.centros).filter(c => !nuc || c.u === nuc).sort((a, b) => a.n.localeCompare(b.n));
+  setOptions(el('fEscuela'), lista.map(c => ({value:c.e, label:c.n})), 'Todas las escuelas');
+  if (mantener && lista.some(c => c.e === prev)) el('fEscuela').value = prev;
+}
+function gruposFiltrados(){
+  const nuc = el('fNucleo').value, est = el('fEscuela').value;
+  return R.grupos.filter(g => (!est || g.estab === est) && (!nuc || R.centros[g.estab].u === nuc));
+}
+
+function renderPanel(){
+  if (!R.data) return;
+  const gs = gruposFiltrados(), est = el('fEscuela').value;
+  const conN = id => R.guard[id] && R.guard[id].conNotas > 0;
+  const tot = gs.length, guard = gs.filter(g => conN(g.id)).length;
+  const matr = gs.reduce((a, g) => a + g.n, 0);
+  const conNotas = gs.reduce((a, g) => a + (R.guard[g.id] ? R.guard[g.id].conNotas : 0), 0);
+  const pct = tot ? Math.round(guard / tot * 100) : 0;
+  const agTot = gs.reduce((a, g) => a + (R.guard[g.id] ? R.guard[g.id].agregados || 0 : 0), 0);
+  el('stats').innerHTML = `<div class="stat"><b>${pct}%</b><span>Avance (${guard} de ${tot} grupos con notas)</span></div>
+    <div class="stat"><b>${tot - guard}</b><span>Grupos sin notas</span></div>
+    <div class="stat"><b>${conNotas.toLocaleString('es-NI')}</b><span>de ${matr.toLocaleString('es-NI')} estudiantes con notas</span></div>
+    <div class="stat clic${agTot ? ' alerta' : ''}" id="statAg" title="Ver la lista"><b>${agTot}</b><span>Estudiantes agregados por docentes${agTot ? ' · ver lista' : ''}</span></div>`;
+  el('statAg').onclick = () => { if (agTot) verAgregados(); };
+
+  if (!est){
+    const porEsc = {};
+    gs.forEach(g => { const o = porEsc[g.estab] || (porEsc[g.estab] = {t:0, s:0, m:0, c:0, a:0}); o.t++; o.m += g.n; if (R.guard[g.id]){ if (conN(g.id)) o.s++; o.c += R.guard[g.id].conNotas; o.a += R.guard[g.id].agregados || 0; } });
+    const filas = Object.keys(porEsc).map(e => Object.assign({e, c0:R.centros[e]}, porEsc[e]))
+      .sort((a, b) => a.c0.u.localeCompare(b.c0.u) || (a.s / a.t) - (b.s / b.t) || a.c0.n.localeCompare(b.c0.n));
+    const multi = !el('fNucleo').value;
+    el('listaPanel').innerHTML = filas.length ? `<table><thead><tr>${multi ? '<th>Núcleo</th>' : ''}<th>Escuela</th><th>Grupos con notas</th><th style="width:28%">Avance</th><th>Estudiantes con notas</th><th>Agregados</th></tr></thead><tbody>` +
+      filas.map(f => `<tr class="clic" data-e="${esc(f.e)}">${multi ? `<td>${esc(f.c0.u)}</td>` : ''}<td><b>${esc(f.c0.n)}</b><br><span class="muted">${esc(f.e)}</span></td>
+        <td>${f.s} de ${f.t}</td><td><div class="bar"><i style="width:${Math.round(f.s / f.t * 100)}%"></i></div></td><td>${f.c} de ${f.m}</td><td>${f.a ? `<span class="chip warn">${f.a}</span>` : ''}</td></tr>`).join('') +
+      '</tbody></table>' : '<p class="empty">No hay escuelas en este filtro.</p>';
+  } else {
+    const lista = gs.slice().sort(cmpGrupo);
+    el('listaPanel').innerHTML = `<table><thead><tr><th>Grupo</th><th>Matrícula</th><th>Estado</th><th>Docente(s)</th><th>Última actualización</th><th></th></tr></thead><tbody>` +
+      lista.map(g => { const m = R.guard[g.id];
+        return `<tr><td><b>${esc(g.modalidad)}</b><br>${esc(g.nivel)} "${esc(g.seccion)}" · ${esc(g.turno)}</td><td>${g.n}</td>
+          <td>${m && m.conNotas > 0 ? `<span class="chip ok">Con notas · ${m.conNotas}/${m.n}</span>` : '<span class="chip pend">Pendiente</span>'}${m && m.agregados ? `<br><span class="chip warn" style="display:inline-block;margin-top:4px">${m.agregados} agregado${m.agregados === 1 ? '' : 's'}</span>` : ''}</td>
+          <td>${m ? esc(m.docente) : ''}${m && m.editadoPor ? `<br><span class="muted">Corregido: ${esc(m.editadoPor)}</span>` : ''}</td>
+          <td>${m ? fechaTxt(m.actualizado) : ''}</td>
+          <td>${m ? `<button class="btn sec sm" data-ver="${esc(g.id)}">Ver notas</button>` : ''}</td></tr>`; }).join('') + '</tbody></table>';
+  }
+}
+el('listaPanel').addEventListener('click', e => {
+  const tr = e.target.closest('tr.clic');
+  if (tr){ el('fEscuela').value = tr.dataset.e; renderPanel(); return; }
+  const b = e.target.closest('[data-ver]');
+  if (b) verGrupo(b.dataset.ver);
+});
+
+// Código de persona de un agregado, siempre entre comillas: "70ABC123" o "" si no tiene
+const cpAgregado = cp => '"' + (cp && !/^AG/.test(cp) ? cp : '') + '"';
+
+async function verAgregados(){
+  const card = el('agregadosCard');
+  card.hidden = false;
+  el('listaAgregados').innerHTML = `<p class="empty">${spin('Cargando…')}</p>`;
+  card.scrollIntoView({behavior:'smooth', block:'start'});
+  try{
+    const r = await api('agregados', Object.assign(cred(), {corte:R.corte}));
+    const nuc = el('fNucleo').value, est = el('fEscuela').value;
+    const lista = r.lista.filter(x => (!nuc || x.nucleo === nuc) && (!est || x.estab === est))
+      .sort((a, b) => a.escuela.localeCompare(b.escuela) || cmpGrupo(a, b) || cmpEst(a, b));
+    el('listaAgregados').innerHTML = lista.length ? `<table><thead><tr><th>Estudiante</th><th>Cód. persona</th><th>Escuela</th><th>Grupo</th><th>Docente(s)</th><th>Fecha</th><th></th></tr></thead><tbody>` +
+      lista.map(x => `<tr><td><b>${esc(nombres(x))}</b> ${esc(apellidos(x))}</td><td>${esc(cpAgregado(x.cp))}</td>
+        <td>${esc(x.escuela)}</td><td>${esc(x.modalidad)}<br>${esc(x.nivel)} "${esc(x.seccion)}" · ${esc(x.turno)}</td>
+        <td>${esc(x.docente)}</td><td>${fechaTxt(x.actualizado)}</td><td><button class="btn sec sm" data-ver="${esc(x.id)}">Ver grupo</button></td></tr>`).join('') +
+      '</tbody></table>' : '<p class="empty">No hay estudiantes agregados en este filtro.</p>';
+  }catch(e){ el('listaAgregados').innerHTML = `<p class="empty" style="color:var(--danger)">${esc(e.message)}</p>`; }
+}
+el('btnCerrarAg').addEventListener('click', () => el('agregadosCard').hidden = true);
+el('listaAgregados').addEventListener('click', e => { const b = e.target.closest('[data-ver]'); if (b) verGrupo(b.dataset.ver); });
+
+async function verGrupo(id, editar){
+  const g = R.grupos.find(x => x.id === id);
+  el('detalleCard').hidden = false;
+  el('detalleTitulo').textContent = `${R.centros[g.estab].n} — ${g.nivel} "${g.seccion}"`;
+  el('detalleBotones').innerHTML = ''; el('detalleMsg').innerHTML = '';
+  el('detalleResumen').textContent = `${grupoTxt(g)} · ${R.corte} corte`;
+  el('tablaDetalle').innerHTML = `<div class="empty">${spin('Cargando notas…')}</div>`;
+  el('detalleCard').scrollIntoView({behavior:'smooth', block:'start'});
+  let doc;
+  try{ doc = (await api('grupo', Object.assign(cred(), {corte:R.corte, id}))).doc; }
+  catch(e){ el('tablaDetalle').innerHTML = `<div class="msg err">${esc(e.message)}</div>`; return; }
+  if (!doc){ el('tablaDetalle').innerHTML = '<div class="empty">Este grupo no tiene notas registradas.</div>'; return; }
+  const {est, valores} = docAValores(doc);
+  const plan = planDeCodigos(doc.m, doc.modalidad, doc.nivel);
+  const bajas = plan.materias.filter(s => !s.q).reduce((a, s) => a + est.filter(x => valores[x.cp][s.code] !== '' && Number(valores[x.cp][s.code]) < 60).length, 0);
+  el('detalleResumen').textContent = `${grupoTxt(g)} · Docente(s): ${doc.docente || '—'} · ${fechaTxt(doc.actualizado)} · ${est.length} estudiantes${(doc.a || []).length ? ` (${doc.a.length} agregado${doc.a.length === 1 ? '' : 's'} por el docente)` : ''} · ${bajas} nota${bajas === 1 ? '' : 's'} menor${bajas === 1 ? '' : 'es'} a 60`;
+  const tocados = {};
+  renderNotas(el('tablaDetalle'), plan, est, valores, !!editar, null, tocados);
+  if (R.user.rol !== 'ADMIN') return;
+  el('detalleBotones').innerHTML = editar
+    ? '<button class="btn" id="bGuardarEd">Guardar correcciones</button><button class="btn sec" id="bCancelEd">Cancelar</button>'
+    : '<button class="btn sec sm" id="bEditar">Corregir notas</button>';
+  const on = (i, f) => { const b = el(i); if (b) b.onclick = f; };
+  on('bEditar', () => verGrupo(id, true));
+  on('bCancelEd', () => verGrupo(id, false));
+  on('bGuardarEd', async () => {
+    if (!contarTocados(tocados)){ el('detalleMsg').innerHTML = '<div class="msg ok">No hay cambios.</div>'; return; }
+    el('bGuardarEd').disabled = true; el('detalleMsg').innerHTML = `<div class="msg ok">${spin('Guardando…')}</div>`;
+    try{
+      await api('guardar', Object.assign(cred(), {corte:R.corte, docente:'',
+        grupo:{estab:g.estab, programa:g.programa, modalidad:g.modalidad, nivel:g.nivel, seccion:g.seccion, turno:g.turno},
+        materias:doc.m, cambios:tocados}), 0);
+      await cargarResumen(); verGrupo(id, false);
+    }catch(e){ el('bGuardarEd').disabled = false; el('detalleMsg').innerHTML = `<div class="msg err">${esc(e.message)}</div>`; }
+  });
+}
+
+// ============================================================
+//  EXPORTACIONES
+// ============================================================
+let _xl = null;
+function cargarExcelJS(){
+  if (window.ExcelJS) return Promise.resolve();
+  return _xl || (_xl = new Promise((ok, fail) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+    s.onload = ok; s.onerror = () => { _xl = null; fail(new Error('No se pudo cargar el generador de Excel.')); };
+    document.head.appendChild(s);
+  }));
+}
+function descargar(buffer, nombre){
+  const url = URL.createObjectURL(new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+  const a = document.createElement('a'); a.href = url; a.download = nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+const slug = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+async function pedirExport(pendientes){
+  const nuc = el('fNucleo').value, est = el('fEscuela').value;
+  const [d] = await Promise.all([
+    api('exportar', Object.assign(cred(), {corte:R.corte, nucleo:nuc, estab:est, pendientes:!!pendientes})),
+    cargarExcelJS()
+  ]);
+  return {d, sufijo: est ? slug(R.centros[est].n) : nuc ? slug(nuc) : 'todos'};
+}
+el('btnPadron').addEventListener('click', async () => {
+  const msg = el('exportMsg'), b = el('btnPadron');
+  b.disabled = true; msg.innerHTML = spin('Preparando Excel…');
+  try{
+    const {d, sufijo} = await pedirExport(el('chkPendientes').checked);
+    if (!d.docs.length){ msg.textContent = 'No hay grupos con notas en este filtro.'; return; }
+    descargar(await construirNotas(d), `notas_${d.corte}_corte_${sufijo}.xlsx`);
+    msg.textContent = 'Excel descargado.';
+  }catch(e){ msg.textContent = 'Error: ' + e.message; }
+  finally{ b.disabled = false; }
+});
+
+const cmpFila = (a, b) => cmpEst({n1:a[1], n2:a[2], a1:a[3], a2:a[4]}, {n1:b[1], n2:b[2], a1:b[3], a2:b[4]});
+
+// ---- Excel de notas: formato sencillo, una hoja por tipo ----
+const FIJAS = ['C. UNICO','ESCUELA','MODALIDAD','NIVEL ','SEC','TURNO','NOMBRE1','NOMBRE2','APELLIDO1','APELLIDO2','COD. DE PERSONA'];
+const HOJAS = [
+  {hoja:'PREESCOLAR', cols:['VAL'], prom:false},
+  {hoja:'PRIMARIA', cols:W('MAT LYL INGLES EEFF AEP CMM CCNN CCSS TAC CV DDM'), prom:true},
+  {hoja:'PRIMARIA COMUNITARIA', cols:W('MAT LYL CCNN CCSS AFPT MEDAMB DDM'), prom:true},
+  {hoja:'SECUNDARIA EN EL CAMPO', cols:W('MAT LYL INGLES CCNN QUIMICA FISICA BIOLOGIA HIST GEOGRAFIA SOCIOLOGIA ECONOMIA FILO VP TAC DDM'), prom:true},
+  {hoja:'SECUNDARIA POR ENCUENTRO', cols:W('MAT LYL INGLES CCNN CCSS QUIMICA FISICA BIOLOGIA DDM EMPPROS'), prom:true},
+  {hoja:'SECUNDARIA REGULAR', cols:W('MAT LYL INGLES EEFF AEP CCNN CCSS QUIMICA FISICA BIOLOGIA TAC CV DDM'), prom:true},
+  {hoja:'III-IV CICLO Y BACHILLERATO', cols:W('MAT LYL INGLES CCNN CCSS QUIMICA FISICA BIOLOGIA HIST GEOGRAFIA SOCIOLOGIA ECONOMIA FILO DDM'), prom:true}
+];
+const CAB = {AFPT:'AFPT', MEDAMB:'MED AMB', EMPPROS:'EMP Y PROS', VAL:'VAL. APRENDI'};
+const colDe = c => (MATERIAS[c] && MATERIAS[c].col) || c;
+function hojaDe(mod){
+  const t = tipoDe(mod), m = norm(mod);
+  if (t === 'PRE') return 'PREESCOLAR';
+  if (t === 'COM') return 'PRIMARIA COMUNITARIA';
+  if (t === 'PRIM') return 'PRIMARIA';
+  if (m === 'SECUNDARIA EN EL CAMPO') return 'SECUNDARIA EN EL CAMPO';
+  if (m === 'SECUNDARIA REGULAR') return 'SECUNDARIA REGULAR';
+  if (m === 'SECUNDARIA POR ENCUENTRO') return 'SECUNDARIA POR ENCUENTRO';
+  return 'III-IV CICLO Y BACHILLERATO';
+}
+
+async function construirNotas(d){
+  const wb = new ExcelJS.Workbook();
+  const borde = {top:{style:'thin', color:{argb:'FFBFC5CE'}}, left:{style:'thin', color:{argb:'FFBFC5CE'}}, bottom:{style:'thin', color:{argb:'FFBFC5CE'}}, right:{style:'thin', color:{argb:'FFBFC5CE'}}};
+  HOJAS.forEach(H => {
+    const docs = d.docs.filter(x => hojaDe(x.modalidad) === H.hoja)
+      .sort((a, b) => a.nucleo.localeCompare(b.nucleo) || a.escuela.localeCompare(b.escuela) || cmpGrupo(a, b));
+    if (!docs.length) return;
+    const ws = wb.addWorksheet(H.hoja, {views:[{state:'frozen', ySplit:1}]});
+    const heads = FIJAS.concat(H.cols.map(c => CAB[c] || (MATERIAS[c] || {x:c}).x), H.prom ? ['PROMEDIO'] : []);
+    const hr = ws.addRow(heads);
+    hr.eachCell(c => { c.font = {bold:true}; c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFE8EEF7'}};
+      c.alignment = {horizontal:'center', vertical:'middle', wrapText:true}; c.border = borde; });
+    hr.height = 30;
+    docs.forEach(x => {
+      const plan = x.pendiente ? planDe(x.modalidad, x.nivel, d.corte) : planDeCodigos(x.m, x.modalidad, x.nivel);
+      x.e.slice().sort(cmpFila).forEach(e => {
+        const vals = {}; (x.m || []).forEach((c, i) => vals[c] = (e[5] || [])[i] ?? '');
+        const porCol = {};
+        Object.keys(vals).forEach(c => { const k = colDe(c); if (porCol[k] === undefined || porCol[k] === '') porCol[k] = vals[c]; });
+        const cpTxt = (x.a || []).indexOf(e[0]) >= 0 ? cpAgregado(e[0]) : e[0];   // agregados: código entre comillas
+        const fila = [Number(x.estab) || x.estab, x.escuela, x.modalidad, x.nivel, x.seccion, x.turno, e[1], e[2], e[3], e[4], cpTxt]
+          .concat(H.cols.map(c => porCol[c] === undefined || porCol[c] === '' ? null : porCol[c]));
+        if (H.prom){ const p = promedio(plan, vals); fila.push(p === '' ? null : p); }
+        const row = ws.addRow(fila);
+        const esAg = (x.a || []).indexOf(e[0]) >= 0;
+        if (esAg) row.getCell(7).note = 'Estudiante agregado por el docente: no está en el padrón oficial.';
+        row.eachCell({includeEmpty:true}, (c, i) => {
+          c.border = borde;
+          if (esAg) c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFFFF2CC'}};
+          if (i > FIJAS.length){
+            c.alignment = {horizontal:'center'};
+            if (typeof c.value === 'number' && c.value < 60) c.font = {color:{argb:'FFC0392B'}, bold:true};
+          }
+        });
+      });
+    });
+    const anchos = [10, 34, 30, 11, 6, 12, 14, 14, 14, 14, 16];
+    heads.forEach((h, i) => ws.getColumn(i + 1).width = i < anchos.length ? anchos[i] : Math.max(8, h.length + 2));
+    ws.autoFilter = {from:{row:1, column:1}, to:{row:1, column:heads.length}};
+  });
+  return wb.xlsx.writeBuffer();
+}
+
+// ============================================================
+//  Arranque
+// ============================================================
+const ses = SS.get('rdc_sesion');
+if (ses){ R.user = ses; entrarPanel(false); }
+init();
+})();
+</script>
+</body>
+</html>
