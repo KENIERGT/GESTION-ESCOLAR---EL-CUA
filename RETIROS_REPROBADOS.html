@@ -1,765 +1,571 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retiros y Reprobados · El Cua</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="tema.css">
-    <style>
-/* Los colores, botones, campos y tarjetas vienen de tema.css; aquí solo lo propio de esta página */
-.d-none{display:none !important;}
-.text-center{text-align:center;}
-body{padding-bottom:40px;}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Retiros y reprobados · El Cuá</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tema.css">
+<style>
+  /* Los colores, botones, campos y tarjetas vienen de tema.css; aquí solo lo propio de esta página */
+  .barra{background:var(--card); border-bottom:1px solid var(--border);}
+  .barra .wrap{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 16px; flex-wrap:wrap;}
+  .barra b{font-weight:600;}
+  nav.tabs{background:var(--card); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:6;}
+  nav.tabs .wrap{display:flex; gap:4px; padding:0 12px; overflow-x:auto;}
+  .tab{flex:none; display:inline-flex; align-items:center; gap:8px; background:none; border:none; border-bottom:3px solid transparent; padding:12px 16px; min-height:var(--toque);
+       font:inherit; font-size:1rem; font-weight:600; color:var(--muted); cursor:pointer; white-space:nowrap; transition:color .15s ease, border-color .15s ease;}
+  .tab svg{width:20px; height:20px;}
+  .tab:hover{color:var(--text);}
+  .tab.on{color:var(--primary); border-bottom-color:var(--primary);}
+  .tab[data-tab="retiro"].on{color:var(--warn); border-bottom-color:var(--gold);}
+  .tab[data-tab="reprobado"].on{color:var(--danger); border-bottom-color:var(--danger);}
+  main{max-width:1120px; margin:0 auto; padding:20px 16px 80px;}
+  .acceso{max-width:480px; margin:24px auto; padding:0 16px;}
+  .acceso h2, main h2{margin:0 0 6px; font-size:1.3rem; font-weight:600;}
+  .sub{margin:0 0 18px; color:var(--muted); font-size:.98rem; max-width:62ch;}
+  .modo{display:grid; grid-template-columns:1fr 1fr; gap:6px; background:var(--head); border:1px solid var(--border); border-radius:var(--radius-sm); padding:4px; margin-bottom:18px;}
+  .modo button{min-height:42px; border:none; border-radius:6px; background:none; font:inherit; font-weight:600; color:var(--muted); cursor:pointer; transition:all .15s ease;}
+  .modo button.on{background:var(--card); color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .campo{margin-bottom:18px;}
+  .dos{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media (max-width:640px){ .dos{grid-template-columns:1fr;} }
 
-/* Contenedores */
-.container{max-width:680px; width:calc(100% - 24px); margin:18px auto; background:var(--card); border:1px solid var(--border);
-    border-radius:var(--radius); padding:28px 26px;}
-.container h1, .container h2{margin:0 0 8px; font-size:1.4rem; font-weight:600;}
-.subtexto{color:var(--muted); font-size:.98rem; line-height:1.5; margin:0 0 20px; max-width:62ch;}
-.text-center .subtexto{margin-left:auto; margin-right:auto;}
-.bienvenida{max-width:480px;}
-.sello-header{display:none;}
+  /* Registro: formulario a la izquierda, lo registrado en esta sesión a la derecha */
+  .registro{display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:20px; align-items:start;}
+  @media (max-width:860px){ .registro{grid-template-columns:1fr;} }
+  .ficha{border-top:6px solid var(--gold);} .ficha.reprobado{border-top-color:var(--danger);}
+  .codigo{font-family:var(--mono); font-size:1.35rem !important; letter-spacing:.06em; min-height:56px !important; text-transform:uppercase;}
+  .estudiante{display:none; margin-top:10px; padding:12px 16px; border-radius:var(--radius-sm); background:var(--primary-soft); border-left:5px solid var(--primary); font-size:1rem;}
+  .estudiante b{display:block; font-size:1.08rem;}
+  .estudiante small{color:var(--muted); font-size:.92rem;}
+  .estudiante.mal{background:var(--danger-bg); border-left-color:var(--danger); color:var(--danger);}
+  .cantidad{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .cantidad button{min-height:50px; border:1.5px solid var(--border); border-radius:var(--radius-sm); background:var(--card); color:var(--text); font:inherit; font-weight:600; cursor:pointer; transition:all .15s ease;}
+  .cantidad button:hover{border-color:var(--primary);}
+  .cantidad button.on{background:var(--danger-bg); border-color:var(--danger); color:var(--danger);}
+  .materias{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:8px;}
+  .chip-m{min-height:48px; display:grid; place-items:center; padding:8px 10px; border:1.5px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; font-size:.95rem; font-weight:500;
+          text-align:center; background:var(--card); color:var(--text); user-select:none; transition:all .15s ease;}
+  .chip-m:hover{border-color:var(--primary);}
+  .chip-m.on{background:var(--danger-bg); color:var(--danger); border-color:var(--danger); font-weight:600;}
+  .chip-m.on::before{content:"✓ ";}
+  .limite{color:var(--muted); font-size:.9rem; margin-top:8px;}
+  .sesion{position:sticky; top:62px;}
+  .sesion h3{margin:0 0 4px; font-size:1.05rem;}
+  .sesion ul{list-style:none; margin:10px 0 0; padding:0;}
+  .sesion li{padding:10px 0; border-top:1px solid var(--line); font-size:.95rem;}
+  .sesion li b{display:block;}
+  .sesion li span{color:var(--muted); font-size:.9rem;}
+  .vacio{color:var(--muted); font-size:.95rem; padding:8px 0;}
 
-/* Barra del usuario conectado */
-.barra-usuario{max-width:680px; width:calc(100% - 24px); margin:14px auto 0; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
-    background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px 8px 16px; font-size:.95rem; font-weight:600;}
-.btn-cambiar-usuario{display:inline-flex; align-items:center; min-height:36px; background:none; border:1.5px solid var(--border); color:var(--text);
-    padding:4px 14px; border-radius:var(--radius-sm); font:inherit; font-size:.9rem; font-weight:500; cursor:pointer; text-decoration:none; transition:all .15s ease;}
-.btn-cambiar-usuario:hover{border-color:var(--primary); background:var(--head);}
-
-/* Menú principal */
-.menu-botones{display:grid; gap:12px; margin-top:22px; text-align:left;}
-.btn-menu{display:flex; align-items:center; gap:16px; width:100%; padding:16px 18px; border:1.5px solid var(--border); border-left:6px solid var(--primary);
-    border-radius:var(--radius); background:var(--card); color:var(--text); font:inherit; cursor:pointer; text-align:left; transition:all .15s ease;}
-.btn-menu:hover{border-color:var(--primary); background:var(--head);}
-.btn-menu:active{transform:translateY(1px);}
-.btn-menu-icono{flex:none; width:46px; height:46px; border-radius:50%; display:grid; place-items:center; background:var(--primary-soft); color:var(--primary);}
-.btn-menu-icono svg{width:24px; height:24px;}
-.btn-menu-texto b{display:block; font-size:1.08rem; font-weight:600;}
-.btn-menu-texto small{display:block; color:var(--muted); font-size:.92rem; margin-top:2px;}
-.btn-menu-retiro{border-left-color:var(--gold);}
-.btn-menu-retiro .btn-menu-icono{background:var(--warn-bg); color:var(--warn);}
-.btn-menu-reprobado{border-left-color:var(--danger);}
-.btn-menu-reprobado .btn-menu-icono{background:var(--danger-bg); color:var(--danger);}
-
-/* Formularios */
-.campo{margin-bottom:18px;}
-input#codRetiro, input#codReprobado{font-family:var(--mono); letter-spacing:.04em;}
-.campo-checkbox{display:flex; align-items:center; gap:10px; font-weight:500; font-size:.98rem; color:var(--muted); margin-bottom:16px; cursor:pointer;}
-.campo-checkbox input{width:20px; height:20px; min-height:0; accent-color:var(--primary);}
-.info-caja{display:none; margin-top:10px; background:var(--primary-soft); border-left:4px solid var(--primary); border-radius:var(--radius-sm); padding:12px 16px; font-size:.98rem;}
-.btn-regresar{display:inline-flex; align-items:center; min-height:40px; background:none; border:none; color:var(--primary); cursor:pointer; font:inherit; font-weight:600; margin:0 0 10px -6px; padding:0 6px; font-size:.95rem;}
-.btn-regresar:hover{text-decoration:underline;}
-
-/* Asignaturas */
-.grid-asignaturas{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:10px;}
-.materia-chip{min-height:50px; display:grid; place-items:center; padding:8px 10px; border:1.5px solid var(--border); border-radius:var(--radius-sm); cursor:pointer;
-    font-size:.95rem; font-weight:500; text-align:center; background:var(--card); color:var(--text); user-select:none; transition:all .15s ease;}
-.materia-chip:hover{border-color:var(--primary);}
-.materia-chip.seleccionada{background:var(--danger-bg); color:var(--danger); border-color:var(--danger); font-weight:600;}
-.materia-chip.seleccionada::before{content:"✓ "; }
-.aviso-limite{color:var(--danger); font-size:.9rem; margin-top:6px; font-weight:500;}
-
-/* Reportes */
-.tabla-container{margin-top:18px;}
-.grupo-nucleo{margin:26px 0 10px; font-size:1.02rem; font-weight:600;}
-.grupo-nucleo small{color:var(--muted); font-weight:500; margin-left:8px; font-size:.9rem;}
-.tabla-reporte{width:100%; border-collapse:collapse; font-size:.92rem; margin-bottom:8px;}
-.tabla-reporte th{background:var(--head); color:var(--muted); padding:11px 10px; text-align:left; font-weight:600; font-size:.85rem; border-bottom:1px solid var(--border); white-space:nowrap;}
-.tabla-reporte td{padding:11px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
-.tabla-reporte tbody tr:hover td{background:var(--primary-soft);}
-.sello-nucleo{display:inline-block; font-weight:600; padding:3px 12px; border-radius:999px; background:var(--primary-soft); color:var(--primary); font-size:.9rem;}
-.detalle-retiro{color:var(--warn); font-weight:600;}
-.detalle-reprobado{color:var(--danger); font-weight:600;}
-.mensaje-vacio{text-align:center; color:var(--muted); font-size:.98rem; padding:28px 10px;}
-@media (max-width:640px){
-    .container{padding:20px 16px;}
+  /* Reportes */
+  .filtros{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:14px; align-items:end;}
+  .segmento{display:grid; grid-template-columns:1fr 1fr; gap:4px; background:var(--head); border:1px solid var(--border); border-radius:var(--radius-sm); padding:4px;}
+  .segmento button{min-height:42px; border:none; border-radius:6px; background:none; font:inherit; font-weight:600; color:var(--muted); cursor:pointer;}
+  .segmento button.on{background:var(--card); color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .check{display:flex; align-items:center; gap:8px; font-weight:500; color:var(--muted); margin:0; min-height:var(--toque);}
+  .check input{width:20px; height:20px; min-height:0; accent-color:var(--primary);}
+  .acciones{display:flex; gap:10px; flex-wrap:wrap; margin:6px 0 4px;}
+  .nota{margin:8px 0 0; color:var(--muted); font-size:.92rem;}
+  .resultados{margin-top:18px;}
+  .grupo-nucleo{margin:24px 0 10px; font-size:1.02rem; font-weight:600;}
+  .grupo-nucleo small{color:var(--muted); font-weight:500; margin-left:8px; font-size:.9rem;}
+  .tabla-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius-sm);}
+  .tabla-reporte{width:100%; border-collapse:collapse; font-size:.92rem;}
+  .tabla-reporte th{background:var(--head); color:var(--muted); padding:11px 10px; text-align:left; font-weight:600; font-size:.85rem; border-bottom:1px solid var(--border); white-space:nowrap;}
+  .tabla-reporte td{padding:11px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
+  .tabla-reporte tbody tr:hover td{background:var(--primary-soft);}
+  .sello{display:inline-block; font-weight:600; padding:3px 12px; border-radius:999px; background:var(--primary-soft); color:var(--primary); font-size:.9rem;}
+  .d-retiro{color:var(--warn); font-weight:600;} .d-reprobado{color:var(--danger); font-weight:600;}
+  .vacio-grande{text-align:center; color:var(--muted); padding:34px 10px;}
+  @media (max-width:640px){
+    .tabla-wrap{border:none;}
     .tabla-reporte thead{position:absolute; left:-9999px; top:-9999px;}
     .tabla-reporte, .tabla-reporte tbody, .tabla-reporte tr, .tabla-reporte td{display:block; width:auto;}
     .tabla-reporte tr{border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:10px; background:var(--card);}
     .tabla-reporte td{display:flex; justify-content:space-between; gap:12px; border:none; padding:5px 0; text-align:right;}
     .tabla-reporte td::before{content:attr(data-label); font-weight:600; color:var(--muted); font-size:.85rem; text-align:left;}
-}
+  }
 
-/* Estadísticas */
-.stats-totales{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:22px;}
-.stat-card{background:var(--head); border:1px solid var(--border); border-left:5px solid var(--primary); border-radius:var(--radius-sm); padding:16px 18px;}
-.stat-retiro{border-left-color:var(--gold);} .stat-reprobado{border-left-color:var(--danger);}
-.stat-numero{font-family:var(--mono); font-size:2.1rem; font-weight:600; line-height:1.1;}
-.stat-retiro .stat-numero{color:var(--warn);} .stat-reprobado .stat-numero{color:var(--danger);}
-.stat-etiqueta{font-size:.95rem; font-weight:500; color:var(--muted); margin-top:2px;}
-.leyenda-grafico{display:flex; gap:18px; font-size:.92rem; color:var(--muted); margin-bottom:10px;}
-.leyenda-grafico span{display:flex; align-items:center; gap:6px;}
-.punto{width:10px; height:10px; border-radius:50%; display:inline-block;}
-.punto-retiro{background:var(--gold);} .punto-reprobado{background:var(--danger);}
-.fila-nucleo{padding:12px 0; border-bottom:1px solid var(--line);}
-.fila-nucleo-nombre{font-size:.95rem; font-weight:600; margin-bottom:6px;}
-.fila-nucleo-barras{display:flex; flex-direction:column; gap:5px;}
-.barra-track{position:relative; background:var(--line); border-radius:6px; height:22px; overflow:hidden;}
-.barra-fill{height:100%; border-radius:6px; transition:width .5s ease; min-width:3px;}
-.barra-retiro{background:var(--gold);} .barra-reprobado{background:var(--danger);}
-.barra-valor{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-family:var(--mono); font-size:.8rem; font-weight:600; color:var(--text);}
+  /* Estadísticas */
+  .totales{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:22px;}
+  .total{background:var(--head); border:1px solid var(--border); border-left:5px solid var(--primary); border-radius:var(--radius-sm); padding:16px 18px;}
+  .total.retiro{border-left-color:var(--gold);} .total.reprobado{border-left-color:var(--danger);}
+  .total b{display:block; font-family:var(--mono); font-size:2.1rem; font-weight:600; line-height:1.1;}
+  .total.retiro b{color:var(--warn);} .total.reprobado b{color:var(--danger);}
+  .total span{color:var(--muted);}
+  .leyenda{display:flex; gap:18px; color:var(--muted); font-size:.92rem; margin-bottom:10px;}
+  .leyenda i{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px;}
+  .fila-nucleo{padding:12px 0; border-bottom:1px solid var(--line);}
+  .fila-nucleo b{display:block; font-size:.95rem; font-weight:600; margin-bottom:6px;}
+  .barras{display:flex; flex-direction:column; gap:5px;}
+  .barra-track{position:relative; background:var(--line); border-radius:6px; height:22px; overflow:hidden;}
+  .barra-fill{height:100%; border-radius:6px; transition:width .5s ease; min-width:3px;}
+  .barra-valor{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-family:var(--mono); font-size:.8rem; font-weight:600;}
 
-/* Aviso flotante */
-.toast{position:fixed; top:16px; left:50%; transform:translateX(-50%) translateY(-20px); background:var(--primary); color:var(--on-primary);
-    padding:13px 22px; border-radius:var(--radius-sm); font-size:.98rem; font-weight:500; box-shadow:0 8px 24px rgba(0,0,0,.25); opacity:0; pointer-events:none;
-    transition:all .25s ease; z-index:999; max-width:92vw;}
-.toast.mostrar{opacity:1; transform:translateX(-50%) translateY(0);}
-.toast.error{background:var(--danger); color:#fff;}
-
-/* Impresión: solo los reportes, una hoja por núcleo, siempre en blanco y negro */
-@media print{
-    :root, :root[data-theme]{--bg:#fff; --card:#fff; --text:#000; --muted:#444; --border:#bbb; --line:#ddd; --head:#eee; --primary:#000; --primary-soft:#eee; --danger:#000; --warn:#000;}
-    body{background:#fff; padding:0;}
-    #toast, #barraUsuario, #menuPrincipal, #pantallaBienvenida, .banda, .btn-regresar, .noprint,
-    #seccionReportes .campo, #seccionReportes .campo-checkbox, #seccionReportes .btn-enviar, #seccionReportes h2{display:none !important;}
-    .container{border:none; max-width:none; width:auto; padding:0; margin:0;}
-    .grupo-nucleo{page-break-before:always;}
-    .grupo-nucleo:first-child{page-break-before:avoid;}
-    .tabla-reporte thead{position:static;}
-    .tabla-reporte, .tabla-reporte tbody{display:table; width:100%;}
-    .tabla-reporte tr{display:table-row; border:none; padding:0;}
-    .tabla-reporte td{display:table-cell; text-align:left;}
-    .tabla-reporte td::before{content:none;}
-}
+  /* Aviso flotante */
+  .toast{position:fixed; top:16px; left:50%; transform:translateX(-50%) translateY(-20px); background:var(--primary); color:var(--on-primary); padding:13px 22px; border-radius:var(--radius-sm);
+         font-weight:500; box-shadow:0 8px 24px rgba(0,0,0,.25); opacity:0; pointer-events:none; transition:all .25s ease; z-index:999; max-width:92vw;}
+  .toast.mostrar{opacity:1; transform:translateX(-50%) translateY(0);}
+  .toast.error{background:var(--danger); color:#fff;}
 </style>
 </head>
 <body>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-    <header class="banda noprint">
-        <div class="wrap">
-            <div>
-                <small>Ministerio de Educación · Delegación Municipal El Cuá</small>
-                <h1>Retiros y reprobados</h1>
-            </div>
-        </div>
-    </header>
-
-    <div id="toast" class="toast"></div>
-
-    <!-- ============ PANTALLA DE BIENVENIDA (solo primera vez) ============ -->
-    <div id="pantallaBienvenida" class="container bienvenida d-none">
-        <div class="sello-header">EEC</div>
-        <h1>Antes de empezar</h1>
-        <p class="subtexto">Escribe tu nombre para identificar los registros que hagas y el código de acceso de tu núcleo. Se guarda solo en este dispositivo.</p>
-
-        <div class="campo">
-            <label>Tu nombre:</label>
-            <input type="text" id="nombreUsuario" placeholder="Ej: Ana Pérez">
-        </div>
-
-        <div id="accesoNer">
-            <div class="campo">
-                <label>Tu núcleo:</label>
-                <select id="nucleoUsuario">
-                    <option value="">-- Seleccione su núcleo --</option>
-                </select>
-            </div>
-            <div class="campo">
-                <label>Código de acceso del núcleo:</label>
-                <input type="password" id="codigoUsuario" placeholder="Código que le dio su director" autocomplete="off">
-            </div>
-        </div>
-
-        <div id="accesoEst" class="d-none">
-            <div class="campo">
-                <label>Usuario:</label>
-                <input type="text" id="usuarioEst" autocomplete="off">
-            </div>
-            <div class="campo">
-                <label>Clave:</label>
-                <input type="password" id="claveEst" autocomplete="off">
-            </div>
-        </div>
-
-        <button class="btn-enviar" id="btnContinuar" onclick="guardarUsuario()">Continuar</button>
-        <button class="btn-regresar" style="margin:14px 0 0" id="btnModo" onclick="alternarModo()">Soy de Estadística municipal</button>
+<header class="banda">
+  <div class="wrap">
+    <div>
+      <small>Ministerio de Educación · Delegación Municipal El Cuá · <a href="index.html">← Inicio</a></small>
+      <h1>Retiros y reprobados</h1>
     </div>
+    <div class="corte" id="corteBadge" hidden></div>
+  </div>
+</header>
 
-    <!-- ============ BARRA SUPERIOR CON USUARIO ============ -->
-    <div id="barraUsuario" class="barra-usuario d-none">
-        <span id="nombreMostrado"></span>
-        <span>
-            <a class="btn-cambiar-usuario" href="index.html" style="text-decoration:none">Inicio</a>
-            <button class="btn-cambiar-usuario" onclick="cambiarUsuario()">Cambiar</button>
-        </span>
+<!-- ======== ENTRAR ======== -->
+<section id="acceso" class="acceso" hidden>
+  <div class="card">
+    <h2>Antes de empezar</h2>
+    <p class="sub">Escriba su nombre para identificar lo que registre. Se guarda solo en este dispositivo.</p>
+    <div class="modo" role="tablist">
+      <button class="on" id="modoNer" type="button">Soy de un NER</button>
+      <button id="modoEst" type="button">Estadística municipal</button>
     </div>
+    <div class="campo"><label for="nombreUsuario">Su nombre</label><input type="text" id="nombreUsuario" placeholder="Ej: Ana Pérez" autocomplete="name"></div>
+    <div id="camposNer">
+      <div class="campo"><label for="nucleoUsuario">Su núcleo (NER)</label><select id="nucleoUsuario"><option value="">Seleccione su núcleo</option></select></div>
+      <div class="campo"><label for="codigoUsuario">Código de acceso del NER</label><input type="password" id="codigoUsuario" placeholder="El que le dio su director" autocomplete="off"></div>
+    </div>
+    <div id="camposEst" hidden>
+      <div class="campo"><label for="usuarioEst">Usuario</label><input type="text" id="usuarioEst" autocomplete="username" autocapitalize="none"></div>
+      <div class="campo"><label for="claveEst">Clave</label><input type="password" id="claveEst" autocomplete="current-password"></div>
+    </div>
+    <button class="btn-enviar" id="btnEntrar" type="button">Entrar</button>
+  </div>
+</section>
 
-    <!-- ============ MENÚ PRINCIPAL ============ -->
-    <div id="menuPrincipal" class="container d-none">
-        <h2>¿Qué desea hacer?</h2>
-        <p class="subtexto">Registre aquí los retiros y reprobados de los núcleos que llevan el corte en físico. Los de las escuelas que digitan notas también aparecen en los reportes.</p>
+<!-- ======== APLICACIÓN ======== -->
+<div id="app" hidden>
+  <div class="barra"><div class="wrap"><span id="quien"></span><button class="btn sec sm" id="btnSalir" type="button">Cambiar usuario</button></div></div>
+  <nav class="tabs" aria-label="Secciones">
+    <div class="wrap">
+      <button class="tab on" data-tab="retiro" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>Registrar retiro</button>
+      <button class="tab" data-tab="reprobado" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 9l6 6M15 9l-6 6"/></svg>Registrar reprobado</button>
+      <button class="tab" data-tab="reportes" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><path d="M7 14h10v7H7z"/></svg>Reportes e impresión</button>
+      <button class="tab" data-tab="estadisticas" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Estadísticas</button>
+    </div>
+  </nav>
 
-        <div class="menu-botones">
-            <button class="btn-menu btn-menu-retiro" onclick="mostrarSeccion('Retiros')">
-                <span class="btn-menu-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></span>
-                <span class="btn-menu-texto"><b>Registrar un retiro</b><small>Un estudiante dejó de asistir a clases</small></span>
-            </button>
-            <button class="btn-menu btn-menu-reprobado" onclick="mostrarSeccion('Reprobados')">
-                <span class="btn-menu-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 9l6 6M15 9l-6 6"/></svg></span>
-                <span class="btn-menu-texto"><b>Registrar un reprobado</b><small>Un estudiante reprobó una o más asignaturas</small></span>
-            </button>
-            <button class="btn-menu btn-menu-reportes" onclick="mostrarSeccion('Reportes')">
-                <span class="btn-menu-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
-                <span class="btn-menu-texto"><b>Consultar e imprimir</b><small>Ver los registros por núcleo y corte</small></span>
-            </button>
-            <button class="btn-menu btn-menu-estadisticas" onclick="mostrarSeccion('Estadisticas')">
-                <span class="btn-menu-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>
-                <span class="btn-menu-texto"><b>Estadísticas</b><small>Cuántos retiros y reprobados hay en cada núcleo</small></span>
-            </button>
+  <main>
+    <!-- Retiro -->
+    <section id="tab-retiro">
+      <div class="registro">
+        <div class="card ficha">
+          <h2>Registrar un retiro</h2>
+          <p class="sub">Escriba el código de persona del estudiante que dejó de asistir. Aparecerán sus datos para confirmar que es la persona correcta.</p>
+          <div class="campo">
+            <label for="codRetiro">Código de persona</label>
+            <input type="text" id="codRetiro" class="codigo" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Ej: 70D33CA8">
+            <div class="estudiante" id="infoRetiro" aria-live="polite"></div>
+          </div>
+          <div class="dos">
+            <div class="campo"><label for="causaRetiro">Causa del retiro</label><select id="causaRetiro"><option value="">Seleccione la causa</option></select></div>
+            <div class="campo"><label for="fechaRetiro">Fecha del retiro</label><input type="date" id="fechaRetiro"></div>
+          </div>
+          <button class="btn-enviar" id="btnRetiro" type="button" disabled>Guardar retiro</button>
         </div>
-    </div>
+        <aside class="card sesion"><h3>Registrados ahora</h3><p class="vacio" id="vacioRetiro">Los retiros que guarde en esta sesión aparecerán aquí.</p><ul id="listaRetiro"></ul></aside>
+      </div>
+    </section>
 
-    <!-- ============ REPORTES ============ -->
-    <div id="seccionReportes" class="container d-none">
-        <button class="btn-regresar" onclick="irAlMenu()">⬅ Volver al Menú</button>
-        <div class="card">
-            <h2>Consulta de Registros</h2>
-
-            <div class="campo">
-                <label>1. Seleccione el Núcleo:</label>
-                <select id="filtroNucleo">
-                    <option value="">-- Todos los Núcleos --</option>
-                    <option value="14 DE SEPTIEMBRE">14 DE SEPTIEMBRE</option>
-                    <option value="15 DE SEPTIEMBRE">15 DE SEPTIEMBRE</option>
-                    <option value="ANDRES CASTRO #1">ANDRES CASTRO #1</option>
-                    <option value="CAMILO ZAPATA">CAMILO ZAPATA</option>
-                    <option value="CARLOS VALDIVIA">CARLOS VALDIVIA</option>
-                    <option value="CLEOTILDE GUILLEN">CLEOTILDE GUILLEN</option>
-                    <option value="EL DESTINO">EL DESTINO</option>
-                    <option value="ESTRELLA DE BELEN">ESTRELLA DE BELEN</option>
-                    <option value="ESTRELLITA DE ORIENTE">ESTRELLITA DE ORIENTE</option>
-                    <option value="GEORGINO ANDRADE">GEORGINO ANDRADE</option>
-                    <option value="JOSE ADAN VASQUEZ">JOSE ADAN VASQUEZ</option>
-                    <option value="LAS PROFESIAS">LAS PROFESIAS</option>
-                    <option value="LUIS ALBERTO CABRALES">LUIS ALBERTO CABRALES</option>
-                    <option value="LUIS ALFONSO HERNANDEZ">LUIS ALFONSO HERNANDEZ</option>
-                    <option value="LUIS ALFONSO VELASQUEZ FLORES">LUIS ALFONSO VELASQUEZ FLORES</option>
-                    <option value="MANOLO CUADRA">MANOLO CUADRA</option>
-                    <option value="NUEVA ALIANZA">NUEVA ALIANZA</option>
-                    <option value="PEDRO LUMBI">PEDRO LUMBI</option>
-                    <option value="PEÑAS BLANCAS">PEÑAS BLANCAS</option>
-                    <option value="RICARDO MORALES AVILES">RICARDO MORALES AVILES</option>
-                    <option value="ROGER ARTETA">ROGER ARTETA</option>
-                    <option value="ROSA MONTOYA FLORES">ROSA MONTOYA FLORES</option>
-                    <option value="RUBEN DARIO">RUBEN DARIO</option>
-                    <option value="SALOMON DE LA SELVA">SALOMON DE LA SELVA</option>
-                    <option value="SALOMON IBARRA MAYORGA">SALOMON IBARRA MAYORGA</option>
-                    <option value="SENDERO DE LUZ">SENDERO DE LUZ</option>
-                </select>
+    <!-- Reprobado -->
+    <section id="tab-reprobado" hidden>
+      <div class="registro">
+        <div class="card ficha reprobado">
+          <h2>Registrar un reprobado</h2>
+          <p class="sub">Escriba el código de persona, indique en cuántas asignaturas reprobó y marque cuáles son.</p>
+          <div class="campo">
+            <label for="codReprobado">Código de persona</label>
+            <input type="text" id="codReprobado" class="codigo" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Ej: 70D33CA8">
+            <div class="estudiante" id="infoReprobado" aria-live="polite"></div>
+          </div>
+          <div class="campo"><label id="lblCant">¿En cuántas asignaturas reprobó?</label>
+            <div class="cantidad" id="cantidad" role="group" aria-labelledby="lblCant">
+              <button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3 o más">3 o más</button>
             </div>
-
-            <div class="campo">
-                <label>2. Tipo de Reporte:</label>
-                <select id="filtroTipo">
-                    <option value="Retiros">Retiros</option>
-                    <option value="Reprobados">Reprobados</option>
-                </select>
-            </div>
-
-            <div class="campo">
-                <label>3. Corte:</label>
-                <select id="filtroCorte">
-                    <option value="">Corte actual</option>
-                    <option value="I">I Corte</option>
-                    <option value="II">II Corte</option>
-                    <option value="III">III Corte</option>
-                    <option value="IV">IV Corte</option>
-                </select>
-            </div>
-
-            <label class="campo-checkbox">
-                <input type="checkbox" id="filtroSoloMios">
-                Ver solo mis registros
-            </label>
-
-            <button class="btn-enviar" onclick="consultarDatos()">Buscar Registros</button>
-
-            <div id="tablaResultados" class="tabla-container"></div>
-            <button class="btn-enviar noprint" onclick="window.print()">🖨 Imprimir (una hoja por núcleo)</button>
+          </div>
+          <div class="campo"><label>Asignaturas reprobadas</label><div class="materias" id="materias"></div><div class="limite" id="limiteMaterias">Primero elija la cantidad.</div></div>
+          <button class="btn-enviar" id="btnReprobado" type="button" disabled>Guardar reprobado</button>
         </div>
-    </div>
+        <aside class="card sesion"><h3>Registrados ahora</h3><p class="vacio" id="vacioReprobado">Los reprobados que guarde en esta sesión aparecerán aquí.</p><ul id="listaReprobado"></ul></aside>
+      </div>
+    </section>
 
-    <!-- ============ ESTADÍSTICAS ============ -->
-    <div id="seccionEstadisticas" class="container d-none">
-        <button class="btn-regresar" onclick="irAlMenu()">⬅ Volver al Menú</button>
-        <div class="card">
-            <h2>Estadísticas por Núcleo</h2>
-            <p class="subtexto">Se actualiza automáticamente cada 15 segundos.</p>
-
-            <div class="stats-totales">
-                <div class="stat-card stat-retiro">
-                    <div class="stat-numero" id="totalRetiros">0</div>
-                    <div class="stat-etiqueta">Retiros</div>
-                </div>
-                <div class="stat-card stat-reprobado">
-                    <div class="stat-numero" id="totalReprobados">0</div>
-                    <div class="stat-etiqueta">Reprobados</div>
-                </div>
-            </div>
-
-            <div class="leyenda-grafico">
-                <span><i class="punto punto-retiro"></i> Retiros</span>
-                <span><i class="punto punto-reprobado"></i> Reprobados</span>
-            </div>
-
-            <div id="graficoNucleos" class="grafico-nucleos"></div>
+    <!-- Reportes -->
+    <section id="tab-reportes" hidden>
+      <div class="card">
+        <h2>Reportes e impresión</h2>
+        <p class="sub">Aquí salen juntos los retiros y reprobados de las escuelas que digitan notas y de las que los registran en físico. El PDF sale en el formato oficial, listo para imprimir.</p>
+        <div class="filtros">
+          <div><label>Tipo de reporte</label><div class="segmento"><button type="button" class="on" data-tipo="Retiros">Retiros</button><button type="button" data-tipo="Reprobados">Reprobados</button></div></div>
+          <div><label for="filtroNucleo">NER</label><select id="filtroNucleo"></select></div>
+          <div><label for="filtroCorte">Corte</label><select id="filtroCorte"><option value="">Corte actual</option><option value="I">I Corte</option><option value="II">II Corte</option><option value="III">III Corte</option><option value="IV">IV Corte</option></select></div>
+          <div><label for="filtroAnio">Año</label><select id="filtroAnio"><option value="">Año actual</option><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option></select></div>
         </div>
-    </div>
-
-    <!-- ============ RETIROS ============ -->
-    <div id="seccionRetiros" class="container d-none">
-        <button class="btn-regresar" onclick="irAlMenu()">⬅ Volver al Menú</button>
-        <h2>Formulario de Retiros</h2>
-
-        <div class="campo">
-            <label>Código Único de Persona:</label>
-            <input type="text" id="codRetiro" placeholder="Ingrese código..." oninput="validar('Retiro')">
-            <div id="infoRetiro" class="info-caja"></div>
+        <label class="check"><input type="checkbox" id="filtroSoloMios"> Ver solo lo que yo registré</label>
+        <div class="acciones">
+          <button class="btn" id="btnPdf" type="button">Descargar PDF para imprimir</button>
+          <button class="btn sec" id="btnBuscar" type="button">Ver en pantalla</button>
         </div>
+        <p class="nota" id="notaPdf">El PDF lleva una hoja por NER, tamaño oficio (legal) horizontal, con el espacio para la firma y sello del director.</p>
+        <div class="resultados" id="resultados"></div>
+      </div>
+    </section>
 
-        <div class="campo">
-            <label>Causa del Retiro:</label>
-            <select id="causaRetiro" onchange="validar('Retiro')">
-                <option value="">-- Seleccione causa --</option>
-                <option value="NUNCA ASISTIO A CLASES">NUNCA ASISTIO A CLASES</option>
-                <option value="FALTA DE APOYO DE LOS PADRES">FALTA DE APOYO DE LOS PADRES</option>
-                <option value="RELACION SENTIMENTAL">RELACION SENTIMENTAL</option>
-                <option value="EMBARAZO">EMBARAZO</option>
-                <option value="DISPERSION GEOGRAFICA">DISPERSION GEOGRAFICA</option>
-                <option value="FALLECIDO">FALLECIDO</option>
-                <option value="TRABAJO">TRABAJO</option>
-                <option value="DIFICULTADES ECONOMICAS">DIFICULTADES ECONOMICAS</option>
-                <option value="CAMBIO DE DOMICILIO">CAMBIO DE DOMICILIO</option>
-                <option value="MIGRACION A OTRO PAIS">MIGRACION A OTRO PAIS</option>
-                <option value="ACCIDENTE">ACCIDENTE</option>
-                <option value="BULYNG">BULYNG</option>
-                <option value="QUEHACERES DEL HOGAR">QUEHACERES DEL HOGAR</option>
-                <option value="MALA CONDUCTA">MALA CONDUCTA</option>
-                <option value="BAJO RENDIMIENTO ESCOLAR">BAJO RENDIMIENTO ESCOLAR</option>
-                <option value="LIMITACIONES FISICAS O INTELECTUALES">LIMITACIONES FISICAS O INTELECTUALES</option>
-                <option value="MAL DESEMPEÑO DEL DOCENTE">MAL DESEMPEÑO DEL DOCENTE</option>
-                <option value="PROBLEMAS DE SALUD">PROBLEMAS DE SALUD</option>
-                <option value="POBRES CONDICIONES DE LA ESCUELA">POBRES CONDICIONES DE LA ESCUELA</option>
-                <option value="RIESGO ASOCIADOS A VIOLENCIA EN EL SECTOR">RIESGO ASOCIADOS A VIOLENCIA EN EL SECTOR</option>
-                <option value="REPROBÓ">REPROBÓ</option>
-                <option value="FINALIZÓ">FINALIZÓ</option>
-            </select>
-        </div>
+    <!-- Estadísticas -->
+    <section id="tab-estadisticas" hidden>
+      <div class="card">
+        <h2>Estadísticas por NER</h2>
+        <p class="sub">Se actualiza sola cada 15 segundos.</p>
+        <div class="totales"><div class="total retiro"><b id="totalRetiros">0</b><span>Retiros</span></div><div class="total reprobado"><b id="totalReprobados">0</b><span>Reprobados</span></div></div>
+        <div class="leyenda"><span><i style="background:var(--gold)"></i>Retiros</span><span><i style="background:var(--danger)"></i>Reprobados</span></div>
+        <div id="grafico"></div>
+      </div>
+    </section>
+  </main>
+</div>
 
-        <div class="campo">
-            <label>Fecha de Retiro:</label>
-            <input type="date" id="fechaRetiro" min="2026-01-01" max="2026-12-31" onchange="validar('Retiro')">
-        </div>
-
-        <button id="btnRetiro" class="btn-enviar" disabled onclick="enviar('Retiro')">Guardar Retiro</button>
-    </div>
-
-    <!-- ============ REPROBADOS ============ -->
-    <div id="seccionReprobados" class="container d-none">
-        <button class="btn-regresar" onclick="irAlMenu()">⬅ Volver al Menú</button>
-        <h2>Formulario de Reprobados</h2>
-
-        <div class="campo">
-            <label>Código Único de Persona:</label>
-            <input type="text" id="codReprobado" placeholder="Ingrese código..." oninput="validar('Reprobado')">
-            <div id="infoReprobado" class="info-caja"></div>
-        </div>
-
-        <div class="campo">
-            <label>¿Cuántas asignaturas reprobó?</label>
-            <select id="cantReprobado" onchange="gestionarAsignaturas()">
-                <option value="">-- Seleccione cantidad --</option>
-                <option value="1">1 asignatura</option>
-                <option value="2">2 asignaturas</option>
-                <option value="3 o más">3 o más asignaturas</option>
-            </select>
-        </div>
-
-        <div class="campo">
-            <label>Seleccione las asignaturas:</label>
-            <div id="contenedorAsignaturas" class="grid-asignaturas"></div>
-            <input type="hidden" id="materiaReprobado">
-            <div id="avisoLimite" class="aviso-limite"></div>
-        </div>
-
-        <button id="btnReprobado" class="btn-enviar" disabled onclick="enviar('Reprobado')">Guardar Reprobado</button>
-    </div>
-
-    <script>
+<script>
 const API_URL = 'https://yujtvrmgppjbzafckqml.supabase.co/functions/v1/api';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const NUCLEOS = ['14 DE SEPTIEMBRE','15 DE SEPTIEMBRE','ANDRES CASTRO #1','CAMILO ZAPATA','CARLOS VALDIVIA','CLEOTILDE GUILLEN','EL DESTINO','ESTRELLA DE BELEN','ESTRELLITA DE ORIENTE','GEORGINO ANDRADE','JOSE ADAN VASQUEZ','LAS PROFESIAS','LUIS ALBERTO CABRALES','LUIS ALFONSO HERNANDEZ','LUIS ALFONSO VELASQUEZ FLORES','MANOLO CUADRA','NUEVA ALIANZA','PEDRO LUMBI','PEÑAS BLANCAS','RICARDO MORALES AVILES','ROGER ARTETA','ROSA MONTOYA FLORES','RUBEN DARIO','SALOMON DE LA SELVA','SALOMON IBARRA MAYORGA','SENDERO DE LUZ'];
+const MATERIAS = ['Lengua y Literatura','Matemática','Inglés','Ciencias Naturales','Ciencias Sociales','Química','Física','Biología','Geografía','Economía','Filosofía','Vocación Productiva'];
 
-async function api(action, payload) {
-    let res;
-    try {
-        res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(Object.assign({ action }, payload || {})) });
-    } catch (e) {
-        throw new Error('Sin conexión a internet o el servidor no responde.');
-    }
-    const data = await res.json();
-    if (data && data.error) throw new Error(data.error);
-    return data;
+async function api(action, payload){
+  let res;
+  try{ res = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(Object.assign({action}, payload || {}))}); }
+  catch(e){ throw new Error('Sin conexión a internet o el servidor no responde.'); }
+  const data = await res.json();
+  if (data && data.error) throw new Error(data.error);
+  return data;
 }
-
-/* ============================================================
-   0. ACCESO: nombre + código del núcleo (docente / director de NER)
-      o usuario y clave (Estadística municipal). Se guarda en este dispositivo.
-   ============================================================ */
 const LS = {
-    get(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } },
-    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
-    del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  get(k){ try{ return localStorage.getItem(k) || ''; }catch(e){ return ''; } },
+  set(k, v){ try{ localStorage.setItem(k, v); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
 };
-const obtenerUsuario = () => LS.get('eec_usuarioNombre');
-const esEstadistica = () => LS.get('eec_modo') === 'est';
-
-// Credenciales que se envían en cada consulta
-function cred() {
-    return esEstadistica()
-        ? { usuario: LS.get('eec_usuario'), clave: LS.get('eec_clave'), docente: obtenerUsuario() }
-        : { nucleo: LS.get('eec_usuarioNucleo'), codigo: LS.get('eec_usuarioCodigo'), docente: obtenerUsuario() };
-}
-const haySesion = () => obtenerUsuario() && (esEstadistica() ? LS.get('eec_usuario') && LS.get('eec_clave')
-                                                             : LS.get('eec_usuarioNucleo') && LS.get('eec_usuarioCodigo'));
-
-function iniciarFlujoUsuario() {
-    // Los núcleos del filtro de reportes se copian al selector de bienvenida
-    Array.from($('filtroNucleo').options).slice(1).forEach(opt => $('nucleoUsuario').appendChild(opt.cloneNode(true)));
-    $('nombreUsuario').value = obtenerUsuario();
-    if (haySesion()) entrar();
-    else $('pantallaBienvenida').classList.remove('d-none');
+let toastT;
+function aviso(msg, error){
+  const t = $('toast'); t.textContent = msg; t.classList.toggle('error', !!error); t.classList.add('mostrar');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('mostrar'), 3400);
 }
 
-function entrar() {
-    $('barraUsuario').classList.remove('d-none');
-    $('nombreMostrado').innerText = obtenerUsuario() + (esEstadistica() ? ' · Estadística' : ' · ' + LS.get('eec_usuarioNucleo'));
-    $('menuPrincipal').classList.remove('d-none');
-    // Un NER solo consulta su propio núcleo
-    if (!esEstadistica()) { $('filtroNucleo').value = LS.get('eec_usuarioNucleo'); $('filtroNucleo').disabled = true; }
-}
+/* ============ Acceso ============ */
+const nombreUsuario = () => LS.get('eec_usuarioNombre');
+const esEst = () => LS.get('eec_modo') === 'est';
+const cred = () => esEst() ? {usuario:LS.get('eec_usuario'), clave:LS.get('eec_clave'), docente:nombreUsuario()}
+                           : {nucleo:LS.get('eec_usuarioNucleo'), codigo:LS.get('eec_usuarioCodigo'), docente:nombreUsuario()};
+const haySesion = () => nombreUsuario() && (esEst() ? LS.get('eec_usuario') && LS.get('eec_clave') : LS.get('eec_usuarioNucleo') && LS.get('eec_usuarioCodigo'));
 
-function alternarModo() {
-    const est = $('accesoEst').classList.toggle('d-none') === false;
-    $('accesoNer').classList.toggle('d-none', est);
-    $('btnModo').innerText = est ? 'Soy docente o director de un NER' : 'Soy de Estadística municipal';
+let modoEst = false;
+function ponerModo(est){
+  modoEst = est;
+  $('modoNer').classList.toggle('on', !est); $('modoEst').classList.toggle('on', est);
+  $('camposNer').hidden = est; $('camposEst').hidden = !est;
 }
+$('modoNer').addEventListener('click', () => ponerModo(false));
+$('modoEst').addEventListener('click', () => ponerModo(true));
 
-async function guardarUsuario() {
-    const nombre = $('nombreUsuario').value.trim();
-    const est = !$('accesoEst').classList.contains('d-none');
-    const btn = $('btnContinuar');
-    try {
-        if (est) {
-            const usuario = $('usuarioEst').value.trim(), clave = $('claveEst').value.trim();
-            if (!usuario || !clave) throw new Error('Escriba su usuario y su clave');
-            btn.disabled = true; btn.innerText = 'Verificando…';
-            const r = await api('login', { usuario, clave });
-            if (!r.ok) throw new Error('Usuario o clave incorrectos');
-            LS.set('eec_modo', 'est'); LS.set('eec_usuario', usuario); LS.set('eec_clave', clave);
-            LS.set('eec_usuarioNombre', nombre || r.nombre || usuario);
-        } else {
-            const nucleo = $('nucleoUsuario').value, codigo = $('codigoUsuario').value.trim();
-            if (!nombre) throw new Error('Por favor escribe tu nombre');
-            if (!nucleo || !codigo) throw new Error('Seleccione su núcleo y escriba el código de acceso');
-            btn.disabled = true; btn.innerText = 'Verificando…';
-            const r = await api('acceso', { nucleo, codigo });
-            if (!r.ok) throw new Error('Código de acceso incorrecto');
-            LS.set('eec_modo', 'ner'); LS.set('eec_usuarioNombre', nombre);
-            LS.set('eec_usuarioNucleo', nucleo); LS.set('eec_usuarioCodigo', codigo);
-        }
-        $('pantallaBienvenida').classList.add('d-none');
-        entrar();
-    } catch (e) {
-        mostrarToast(e.message, true);
-    } finally {
-        btn.disabled = false; btn.innerText = 'Continuar';
+async function entrarClick(){
+  const nombre = $('nombreUsuario').value.trim(), b = $('btnEntrar');
+  try{
+    if (modoEst){
+      const usuario = $('usuarioEst').value.trim(), clave = $('claveEst').value.trim();
+      if (!usuario || !clave) throw new Error('Escriba su usuario y su clave.');
+      b.disabled = true; b.textContent = 'Verificando…';
+      const r = await api('login', {usuario, clave});
+      if (!r.ok) throw new Error('Usuario o clave incorrectos.');
+      LS.set('eec_modo', 'est'); LS.set('eec_usuario', usuario); LS.set('eec_clave', clave); LS.set('eec_usuarioNombre', nombre || r.nombre || usuario);
+    }else{
+      const nucleo = $('nucleoUsuario').value, codigo = $('codigoUsuario').value.trim();
+      if (!nombre) throw new Error('Escriba su nombre.');
+      if (!nucleo || !codigo) throw new Error('Elija su núcleo y escriba el código de acceso.');
+      b.disabled = true; b.textContent = 'Verificando…';
+      const r = await api('acceso', {nucleo, codigo});
+      if (!r.ok) throw new Error('El código de acceso no es el de ese núcleo.');
+      LS.set('eec_modo', 'ner'); LS.set('eec_usuarioNombre', nombre); LS.set('eec_usuarioNucleo', nucleo); LS.set('eec_usuarioCodigo', codigo);
     }
+    iniciarApp();
+  }catch(e){ aviso(e.message, true); }
+  finally{ b.disabled = false; b.textContent = 'Entrar'; }
+}
+$('btnEntrar').addEventListener('click', entrarClick);
+['nombreUsuario', 'codigoUsuario', 'claveEst'].forEach(i => $(i).addEventListener('keydown', e => { if (e.key === 'Enter') entrarClick(); }));
+$('btnSalir').addEventListener('click', () => {
+  ['eec_usuarioNombre','eec_usuarioNucleo','eec_usuarioCodigo','eec_modo','eec_usuario','eec_clave'].forEach(k => LS.del(k)); location.reload();
+});
+
+/* ============ Aplicación ============ */
+let periodo = {corte:'', anio:''};
+async function iniciarApp(){
+  $('acceso').hidden = true; $('app').hidden = false;
+  $('quien').innerHTML = `<b>${esc(nombreUsuario())}</b> · ${esEst() ? 'Estadística municipal' : esc(LS.get('eec_usuarioNucleo'))}`;
+  if (!esEst()){ $('filtroNucleo').value = LS.get('eec_usuarioNucleo'); $('filtroNucleo').disabled = true; }
+  try{
+    const d = await api('init');
+    periodo = {corte:d.corte, anio:d.anio};
+    $('corteBadge').textContent = `${d.corte} Corte · ${d.anio}`; $('corteBadge').hidden = false;
+    $('causaRetiro').innerHTML = '<option value="">Seleccione la causa</option>' + (d.causas || []).map(c => `<option>${esc(c)}</option>`).join('');
+    $('fechaRetiro').min = d.anio + '-01-01'; $('fechaRetiro').max = hoyISO();
+  }catch(e){ aviso(e.message, true); }
+  setTimeout(() => $('codRetiro').focus(), 100);
+}
+const hoyISO = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+
+function iniciar(){
+  const opciones = NUCLEOS.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  $('nucleoUsuario').insertAdjacentHTML('beforeend', opciones);
+  $('filtroNucleo').innerHTML = '<option value="">Todos los NER</option>' + opciones;
+  $('materias').innerHTML = MATERIAS.map(m => `<div class="chip-m" role="button" tabindex="0" data-m="${esc(m)}">${esc(m)}</div>`).join('');
+  $('nombreUsuario').value = nombreUsuario();
+  if (haySesion()) iniciarApp(); else $('acceso').hidden = false;
 }
 
-function cambiarUsuario() {
-    ['eec_usuarioNombre', 'eec_usuarioNucleo', 'eec_usuarioCodigo', 'eec_modo', 'eec_usuario', 'eec_clave'].forEach(k => LS.del(k));
-    location.reload();
+/* ---- pestañas ---- */
+let intervalo = null;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  const t = b.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b));
+  ['retiro', 'reprobado', 'reportes', 'estadisticas'].forEach(s => $('tab-' + s).hidden = s !== t);
+  clearInterval(intervalo); intervalo = null;
+  if (t === 'estadisticas'){ cargarEstadisticas(); intervalo = setInterval(cargarEstadisticas, 15000); }
+  if (t === 'retiro') $('codRetiro').focus(); if (t === 'reprobado') $('codReprobado').focus();
+}));
+
+/* ---- búsqueda del estudiante por código (el servidor lo busca en la matrícula del corte actual) ---- */
+const hallado = {Retiro:null, Reprobado:null}, ultimo = {Retiro:'', Reprobado:''};
+let esperaV;
+function validar(tipo, retardo){ clearTimeout(esperaV); esperaV = setTimeout(() => _validar(tipo), retardo == null ? 350 : retardo); }
+async function _validar(tipo){
+  const cod = $('cod' + tipo).value.trim().toUpperCase(), info = $('info' + tipo), btn = $('btn' + tipo);
+  if (cod !== ultimo[tipo]){
+    ultimo[tipo] = cod; hallado[tipo] = null; btn.disabled = true;
+    if (cod.length < 4){ info.style.display = 'none'; return; }
+    info.className = 'estudiante'; info.style.display = 'block'; info.textContent = 'Buscando…';
+    try{
+      const r = await api('fBuscar', Object.assign({cp:cod}, cred()));
+      if (ultimo[tipo] !== cod) return;
+      hallado[tipo] = r.encontrado ? r : {noExiste:true};
+    }catch(e){ if (ultimo[tipo] !== cod) return; hallado[tipo] = {error:e.message}; }
+  }
+  const r = hallado[tipo]; if (!r) return;
+  btn.disabled = true; info.style.display = 'block';
+  if (r.error || r.noExiste){
+    info.className = 'estudiante mal';
+    info.textContent = r.error || 'Ese código no está en la matrícula del corte actual. Revise que esté bien escrito.';
+    return;
+  }
+  const yaTiene = tipo === 'Retiro' ? r.yaRetiro : r.yaReprobado;
+  info.className = 'estudiante' + (yaTiene ? ' mal' : '');
+  info.innerHTML = `<b>${esc(r.nombre)}</b><small>${esc(r.escuela)} · ${esc(r.grupo)}</small>` +
+    (yaTiene ? `<br>Este código ya tiene un ${tipo === 'Retiro' ? 'retiro' : 'reprobado'} registrado en este corte: no se puede repetir.` : '');
+  if (yaTiene) return;
+  btn.disabled = tipo === 'Retiro' ? !($('causaRetiro').value && $('fechaRetiro').value) : !(cantidad && seleccionadas.length);
+}
+$('codRetiro').addEventListener('input', () => validar('Retiro'));
+$('codReprobado').addEventListener('input', () => validar('Reprobado'));
+$('causaRetiro').addEventListener('change', () => validar('Retiro', 0));
+$('fechaRetiro').addEventListener('change', () => validar('Retiro', 0));
+
+/* ---- reprobado: cantidad y asignaturas ---- */
+let cantidad = '', seleccionadas = [];
+const maximo = () => cantidad === '3 o más' ? MATERIAS.length : Number(cantidad || 0);
+function pintarLimite(){
+  $('limiteMaterias').textContent = !cantidad ? 'Primero elija la cantidad.' : `Marque ${cantidad === '3 o más' ? 'al menos 3' : cantidad === '1' ? 'la asignatura' : 'las 2 asignaturas'} (${seleccionadas.length} marcada${seleccionadas.length === 1 ? '' : 's'}).`;
+}
+$('cantidad').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  cantidad = b.dataset.v; seleccionadas = [];
+  document.querySelectorAll('#cantidad button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.chip-m').forEach(c => c.classList.remove('on'));
+  pintarLimite(); validar('Reprobado', 0);
+});
+function alternarMateria(c){
+  if (!cantidad){ aviso('Primero elija en cuántas asignaturas reprobó.', true); return; }
+  const m = c.dataset.m;
+  if (seleccionadas.includes(m)){ seleccionadas = seleccionadas.filter(x => x !== m); c.classList.remove('on'); }
+  else if (seleccionadas.length < maximo()){ seleccionadas.push(m); c.classList.add('on'); }
+  else aviso(`Solo puede marcar ${maximo()} asignatura${maximo() === 1 ? '' : 's'}.`, true);
+  pintarLimite(); validar('Reprobado', 0);
+}
+$('materias').addEventListener('click', e => { const c = e.target.closest('.chip-m'); if (c) alternarMateria(c); });
+$('materias').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('chip-m')){ e.preventDefault(); alternarMateria(e.target); } });
+
+/* ---- guardar ---- */
+const sesion = {Retiro:[], Reprobado:[]};
+function pintarSesion(tipo){
+  const l = sesion[tipo];
+  $('vacio' + tipo).hidden = l.length > 0;
+  $('lista' + tipo).innerHTML = l.slice().reverse().slice(0, 12).map(x => `<li><b>${esc(x.nombre)}</b><span>${esc(x.cp)} · ${esc(x.detalle)} · ${esc(x.hora)}</span></li>`).join('');
+}
+async function guardar(tipo){
+  const btn = $('btn' + tipo), cp = $('cod' + tipo).value.trim().toUpperCase(), h = hallado[tipo];
+  const texto = btn.textContent; btn.disabled = true; btn.textContent = 'Guardando…';
+  const payload = Object.assign({tipo, cp}, cred());
+  if (tipo === 'Retiro'){ payload.causa = $('causaRetiro').value; payload.fecha = $('fechaRetiro').value; }
+  else { payload.cant = cantidad; payload.materias = seleccionadas.join(', '); }
+  try{
+    await api('fRegistrar', payload);
+    sesion[tipo].push({nombre:h.nombre, cp, detalle:tipo === 'Retiro' ? payload.causa : seleccionadas.join(', '), hora:new Date().toLocaleTimeString('es-NI', {hour:'2-digit', minute:'2-digit'})});
+    pintarSesion(tipo);
+    aviso(`${tipo === 'Retiro' ? 'Retiro' : 'Reprobado'} guardado: ${h.nombre}`);
+    // listo para el siguiente estudiante (la fecha se conserva)
+    $('cod' + tipo).value = ''; ultimo[tipo] = ''; hallado[tipo] = null; $('info' + tipo).style.display = 'none';
+    if (tipo === 'Retiro') $('causaRetiro').value = '';
+    else { cantidad = ''; seleccionadas = []; document.querySelectorAll('#cantidad button, .chip-m').forEach(x => x.classList.remove('on')); pintarLimite(); }
+    $('cod' + tipo).focus();
+  }catch(e){ aviso(e.message, true); btn.disabled = false; }
+  finally{ btn.textContent = texto; }
+}
+$('btnRetiro').addEventListener('click', () => guardar('Retiro'));
+$('btnReprobado').addEventListener('click', () => guardar('Reprobado'));
+
+/* ============ Reportes ============ */
+let tipoReporte = 'Retiros';
+document.querySelectorAll('.segmento button').forEach(b => b.addEventListener('click', () => {
+  tipoReporte = b.dataset.tipo; document.querySelectorAll('.segmento button').forEach(x => x.classList.toggle('on', x === b)); $('resultados').innerHTML = '';
+}));
+function filtros(){
+  const p = {tipo:tipoReporte};
+  if ($('filtroCorte').value) p.corte = $('filtroCorte').value;
+  if ($('filtroAnio').value) p.anio = $('filtroAnio').value;
+  if (esEst()) p.nucleo = $('filtroNucleo').value;   // un NER ya va limitado a su núcleo por su código
+  return p;
+}
+async function verEnPantalla(){
+  const cont = $('resultados'); cont.innerHTML = '<p class="vacio-grande">Buscando registros…</p>';
+  try{
+    const r = await api('fReporte', Object.assign(cred(), filtros(), {soloMios:$('filtroSoloMios').checked}));
+    if (!r.lista.length){ cont.innerHTML = '<p class="vacio-grande">No hay registros con estos filtros.</p>'; return; }
+    const ret = tipoReporte === 'Retiros', por = new Map();
+    r.lista.forEach(x => { const k = x.nucleo || 'Sin NER'; if (!por.has(k)) por.set(k, []); por.get(k).push(x); });
+    cont.innerHTML = Array.from(por, ([n, f]) => `
+      <h3 class="grupo-nucleo"><span class="sello">${esc(n)}</span><small>${f.length} registro${f.length === 1 ? '' : 's'}</small></h3>
+      <div class="tabla-wrap"><table class="tabla-reporte"><thead><tr><th>Escuela</th><th>Código</th><th>Nombre</th><th>${ret ? 'Fecha' : 'Cant.'}</th><th>${ret ? 'Causa' : 'Asignaturas'}</th><th>Registró</th><th>Origen</th></tr></thead><tbody>` +
+      f.map(x => `<tr><td data-label="Escuela">${esc(x.escuela)}</td><td data-label="Código">${esc(x.cp)}</td><td data-label="Nombre">${esc(x.nombre)}</td>
+        <td data-label="${ret ? 'Fecha' : 'Cantidad'}">${esc(ret ? x.fecha : x.cant)}</td><td data-label="${ret ? 'Causa' : 'Asignaturas'}" class="${ret ? 'd-retiro' : 'd-reprobado'}">${esc(x.detalle || '-')}</td>
+        <td data-label="Registró">${esc(x.registradoPor || '-')}</td><td data-label="Origen">${x.origen === 'FISICO' ? 'Físico' : 'Digital'}</td></tr>`).join('') + '</tbody></table></div>').join('');
+  }catch(e){ cont.innerHTML = `<p class="vacio-grande">${esc(e.message)}</p>`; }
+}
+$('btnBuscar').addEventListener('click', verEnPantalla);
+
+/* ---- PDF en el formato oficial (hoja de cálculo "Formato de Retiros" / "Formato de Reprobados") ---- */
+// [encabezado, ancho relativo, valor, opciones]
+const COL_RETIROS = [
+  ['No', 4, (f, i) => i], ['CodUnico', 7, f => f.codEst], ['CodCentro', 7, f => f.codCentro], ['Centro Educativo', 20, f => f.centro],
+  ['Nivel educativo', 10, f => f.programa], ['Modalidad', 15, f => f.modalidad], ['Dependencia', 10.5, f => f.dependencia], ['Nivel_grado', 8.5, f => f.nivel],
+  ['Secc', 4.5, f => f.seccion], ['Turno', 11.5, f => f.turno], ['Cod Único Per', 20, f => f.cp, 'codigo'], ['Primer Nombre', 11.5, f => f.n1],
+  ['Segundo Nombre', 11.5, f => f.n2], ['Primer Apellido', 11.5, f => f.a1], ['Segundo Apellido', 11.5, f => f.a2], ['Dirección Alumno', 24, f => f.direccion],
+  ['Nombre Responsable', 20, f => f.responsable], ['Cédula Responsable', 16.5, f => f.cedula], ['Fecha de entrega', 11, f => f.entrega],
+  ['Fecha de Retiro', 10.5, f => f.fechaRetiro], ['Causa del Retiro', 13.5, f => f.causa], ['NER', 10, f => f.nucleo], ['CORTE', 11, (f, i, c) => c]
+];
+const COL_REPROBADOS = [
+  ['No', 4, (f, i) => i], ['CodUnico', 7, f => f.codEst], ['CodCentro', 7, f => f.codCentro], ['Centro Educativo', 24, f => f.centro],
+  ['Nivel educativo', 10, f => f.programa], ['Modalidad', 14, f => f.modalidad], ['Nivel_grado', 8.5, f => f.nivel], ['Sección', 5, f => f.seccion],
+  ['Turno', 11.5, f => f.turno], ['Cod Único Per', 20, f => f.cp, 'codigo'], ['Primer Nombre', 11.5, f => f.n1], ['Segundo Nombre', 11.5, f => f.n2],
+  ['Primer Apellido', 11.5, f => f.a1], ['Segundo Apellido', 11.5, f => f.a2], ['Dirección Estudiante', 24, f => f.direccion], ['Nombre Responsable', 20, f => f.responsable],
+  ['Cédula Responsable', 16.5, f => f.cedula], ['Fecha de entrega', 11, f => f.entrega], ['Reprobado1_2_3omásAsig', 10, f => f.cant],
+  ['CLASE. REPR', 28, f => f.clases], ['CORTE', 11, (f, i, c) => c]
+];
+let _pdf = null;
+function cargarScript(src){ return new Promise((ok, fail) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => fail(new Error('No se pudo cargar el generador de PDF. Revise su conexión.')); document.head.appendChild(s); }); }
+function cargarPDF(){
+  if (window.jspdf && window.jspdf.jsPDF.API.autoTable) return Promise.resolve();
+  return _pdf || (_pdf = cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+    .then(() => cargarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js')).catch(e => { _pdf = null; throw e; }));
+}
+async function imagen(url){   // logos del encabezado oficial; si no cargan, el PDF sale igual sin ellos
+  try{
+    const b = await (await fetch(url)).blob();
+    return await new Promise(ok => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => ok(null); r.readAsDataURL(b); });
+  }catch(e){ return null; }
 }
 
-/* ============================================================
-   1. TOASTS (reemplazan los alert())
-   ============================================================ */
-let toastTimeout;
-function mostrarToast(mensaje, esError) {
-    const toast = $('toast');
-    toast.innerText = mensaje;
-    toast.classList.toggle('error', !!esError);
-    toast.classList.add('mostrar');
-    clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => toast.classList.remove('mostrar'), 3200);
-}
+async function descargarPDF(){
+  const b = $('btnPdf'), texto = b.textContent;
+  b.disabled = true; b.textContent = 'Preparando el PDF…';
+  try{
+    const r = await api('fImprimir', Object.assign(cred(), filtros()));
+    if (!r.filas.length){ aviso('No hay registros para imprimir con estos filtros.', true); return; }
+    const [, gob, sinfo] = await Promise.all([cargarPDF(), imagen('img/gobierno.jpg'), imagen('img/sinfo.png')]);
+    const ret = tipoReporte === 'Retiros', cols = ret ? COL_RETIROS : COL_REPROBADOS, corteTxt = r.corte + ' CORTE';
+    const titulo = ret ? `Estudiantes con Retiro de matrícula ${r.anio}` : 'Estudiantes Reprobados en 1, 2, 3 o más asignaturas';
+    const doc = new window.jspdf.jsPDF({orientation:'landscape', unit:'pt', format:'legal'});   // 14 x 8.5 pulgadas, como la hoja oficial
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 10, TOP = 138, BAJO = 46;
+    const k = (W - 2 * M) / cols.reduce((a, c) => a + c[1], 0);
+    const estilos = {}; cols.forEach((c, i) => { estilos[i] = {cellWidth:c[1] * k}; if (c[3] === 'codigo') estilos[i] = Object.assign(estilos[i], {fontStyle:'bold', fontSize:9}); });
 
-/* ============================================================
-   2. NAVEGACIÓN
-   ============================================================ */
-const SECCIONES = ['Retiros', 'Reprobados', 'Reportes', 'Estadisticas'];
-
-function mostrarSeccion(tipo) {
-    $('menuPrincipal').classList.add('d-none');
-    SECCIONES.forEach(s => $('seccion' + s).classList.add('d-none'));
-    $('seccion' + tipo).classList.remove('d-none');
-    if (tipo === 'Estadisticas') iniciarActualizacionEstadisticas();
-    else detenerActualizacionEstadisticas();
-}
-
-function irAlMenu() {
-    SECCIONES.forEach(s => $('seccion' + s).classList.add('d-none'));
-    $('menuPrincipal').classList.remove('d-none');
-    detenerActualizacionEstadisticas();
-}
-
-/* ============================================================
-   3. VALIDACIÓN: el servidor busca el código en el padrón del corte actual
-      (ya no hace falta estudiantes.csv) y avisa si ya tiene registro.
-   ============================================================ */
-const encontrado = { Retiro: null, Reprobado: null };   // resultado de la última búsqueda
-const ultimoCodigo = { Retiro: '', Reprobado: '' };
-
-let debounceValidar;
-function validar(tipo) {
-    clearTimeout(debounceValidar);
-    debounceValidar = setTimeout(() => _validarAhora(tipo), 350);
-}
-
-async function _validarAhora(tipo) {
-    const cod = $('cod' + tipo).value.trim().toUpperCase();
-    const info = $('info' + tipo), btn = $('btn' + tipo);
-
-    if (cod !== ultimoCodigo[tipo]) {                    // código nuevo: se consulta al servidor
-        ultimoCodigo[tipo] = cod;
-        encontrado[tipo] = null;
-        btn.disabled = true;
-        if (cod.length < 4) { info.style.display = 'none'; return; }
-        info.style.display = 'block'; info.style.color = 'var(--muted)'; info.innerHTML = 'Buscando…';
-        try {
-            const r = await api('fBuscar', Object.assign({ cp: cod }, cred()));
-            if (ultimoCodigo[tipo] !== cod) return;     // el usuario siguió escribiendo
-            encontrado[tipo] = r.encontrado ? r : { noExiste: true };
-        } catch (e) {
-            if (ultimoCodigo[tipo] !== cod) return;
-            encontrado[tipo] = { error: e.message };
-        }
+    let nerActual = '';
+    const encabezado = () => {
+      if (gob) doc.addImage(gob, 'JPEG', M + 8, 8, 118, 118 / 3.59, 'gobierno', 'FAST');
+      if (sinfo) doc.addImage(sinfo, 'PNG', (W - 470) / 2, 4, 470, 470 / 6.22, 'sinfo', 'FAST');   // el alias evita repetir la imagen en cada hoja
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(21); doc.setTextColor(0);
+      doc.text(titulo, W / 2, 98, {align:'center'});
+      doc.setFontSize(11.5);
+      doc.text('Corte Evaluativo:', M + 90, 120, {align:'right'}); doc.setFont('helvetica', 'normal'); doc.text(corteTxt, M + 100, 120);
+      doc.setFont('helvetica', 'bold'); doc.text('Municipio: El Cua          Departamento: Jinotega', W / 2, 120, {align:'center'});
+      doc.text('NER:', W - 330, 120, {align:'right'}); doc.setFont('helvetica', 'normal'); doc.text(nerActual, W - 324, 120, {maxWidth:310});
+    };
+    const porNer = new Map();
+    r.filas.forEach(f => { const n = f.nucleo || 'SIN NER'; if (!porNer.has(n)) porNer.set(n, []); porNer.get(n).push(f); });
+    let primero = true;
+    for (const [ner, filas] of porNer){
+      if (!primero) doc.addPage(); primero = false;
+      nerActual = ner;
+      doc.autoTable({
+        head:[cols.map(c => c[0])], body:filas.map((f, i) => cols.map(c => String(c[2](f, i + 1, corteTxt) ?? ''))),
+        startY:TOP, margin:{top:TOP, left:M, right:M, bottom:BAJO}, tableWidth:W - 2 * M, theme:'grid', columnStyles:estilos, rowPageBreak:'avoid',
+        styles:{font:'helvetica', fontSize:6.3, cellPadding:{top:2, bottom:2, left:2, right:2}, halign:'center', valign:'middle', lineColor:[0, 0, 0], lineWidth:.4, textColor:0, overflow:'linebreak', minCellHeight:25},
+        headStyles:{fillColor:[217, 225, 242], textColor:0, fontStyle:'bold', fontSize:6.6, lineWidth:.5, minCellHeight:30},
+        didDrawPage: encabezado
+      });
     }
-
-    const r = encontrado[tipo];
-    if (!r) return;
-    info.style.display = 'block';
-    btn.disabled = true;
-    if (r.error)    { info.style.color = 'var(--danger)'; info.innerHTML = '⚠️ ' + esc(r.error); return; }
-    if (r.noExiste) { info.style.color = 'var(--danger)'; info.innerHTML = '❌ Código no encontrado en el padrón del corte actual'; return; }
-
-    info.style.color = 'var(--text)';
-    info.innerHTML = `<strong>Estudiante:</strong> ${esc(r.nombre)}<br><small>${esc(r.escuela)} · ${esc(r.grupo)}</small>`;
-
-    const yaTiene = tipo === 'Retiro' ? r.yaRetiro : r.yaReprobado;
-    if (yaTiene) {   // mismo código, misma categoría: no se repite
-        info.style.color = 'var(--danger)';
-        info.innerHTML += `<br>⚠️ Este código ya tiene un registro de ${tipo === 'Retiro' ? 'Retiro' : 'Reprobado'}. No se puede repetir.`;
-        return;
+    const n = doc.getNumberOfPages();
+    for (let p = 1; p <= n; p++){   // pie de cada hoja: firma y sello del director
+      doc.setPage(p); doc.setDrawColor(0); doc.setLineWidth(.6); doc.line(M + 24, H - 26, M + 190, H - 26);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(0); doc.text('Firma y sello del director', M + 107, H - 15, {align:'center'});
+      doc.text(`Hoja ${p} de ${n}`, W - M - 4, H - 15, {align:'right'});
     }
+    const quien = $('filtroNucleo').value || (esEst() ? 'todos los NER' : LS.get('eec_usuarioNucleo'));
+    doc.save(`${ret ? 'Retiros' : 'Reprobados'} ${corteTxt} ${r.anio} - ${quien}.pdf`.replace(/[\\/:*?"<>|]+/g, ' '));
+    aviso('PDF descargado. Está listo para imprimir en hoja oficio horizontal.');
+  }catch(e){ aviso(e.message, true); }
+  finally{ b.disabled = false; b.textContent = texto; }
+}
+$('btnPdf').addEventListener('click', descargarPDF);
 
-    if (tipo === 'Retiro') {
-        const fVal = $('fechaRetiro').value;
-        let fechaValida = false;
-        if (fVal) {
-            if (new Date(fVal + 'T00:00:00').getFullYear() === 2026) fechaValida = true;
-            else info.innerHTML += "<br><span style='color:var(--danger)'>⚠️ El retiro debe ser del año 2026</span>";
-        }
-        btn.disabled = !($('causaRetiro').value && fechaValida);
-    } else {
-        btn.disabled = !($('cantReprobado').value && $('materiaReprobado').value.trim());
-    }
+/* ============ Estadísticas ============ */
+async function cargarEstadisticas(){
+  try{
+    const d = await api('fEstadisticas', cred());
+    const ret = d.retiros || {}, rep = d.reprobados || {};
+    $('totalRetiros').textContent = Object.values(ret).reduce((a, b) => a + b, 0).toLocaleString('es-NI');
+    $('totalReprobados').textContent = Object.values(rep).reduce((a, b) => a + b, 0).toLocaleString('es-NI');
+    const ner = [...new Set([...Object.keys(ret), ...Object.keys(rep)])].sort((a, b) => ((rep[b] || 0) + (ret[b] || 0)) - ((rep[a] || 0) + (ret[a] || 0)));
+    if (!ner.length){ $('grafico').innerHTML = '<p class="vacio-grande">Todavía no hay registros en este corte.</p>'; return; }
+    const max = Math.max(1, ...ner.map(n => Math.max(ret[n] || 0, rep[n] || 0)));
+    $('grafico').innerHTML = ner.map(n => `<div class="fila-nucleo"><b>${esc(n)}</b><div class="barras">
+      <div class="barra-track"><div class="barra-fill" style="width:${((ret[n] || 0) / max * 100).toFixed(1)}%;background:var(--gold)"></div><span class="barra-valor">${ret[n] || 0}</span></div>
+      <div class="barra-track"><div class="barra-fill" style="width:${((rep[n] || 0) / max * 100).toFixed(1)}%;background:var(--danger)"></div><span class="barra-valor">${rep[n] || 0}</span></div></div></div>`).join('');
+  }catch(e){ $('grafico').innerHTML = `<p class="vacio-grande">${esc(e.message)}</p>`; }
 }
 
-/* ============================================================
-   4. ENVÍO
-   ============================================================ */
-async function enviar(tipo) {
-    const btn = $('btn' + tipo);
-    const cod = $('cod' + tipo).value.trim().toUpperCase();
-    const textoOriginal = btn.innerText;
-    btn.disabled = true;
-    btn.innerText = 'Guardando...';
-
-    const payload = Object.assign({ tipo, cp: cod }, cred());
-    if (tipo === 'Retiro') {
-        payload.fecha = $('fechaRetiro').value;
-        payload.causa = $('causaRetiro').value;
-    } else {
-        payload.cant = $('cantReprobado').value;
-        payload.materias = $('materiaReprobado').value;
-    }
-
-    try {
-        await api('fRegistrar', payload);
-        mostrarToast('✅ Registro guardado correctamente');
-        setTimeout(() => location.reload(), 1000);
-    } catch (e) {
-        mostrarToast('❌ ' + e.message, true);
-        btn.disabled = false;
-        btn.innerText = textoOriginal;
-    }
-}
-
-/* ============================================================
-   5. GESTIÓN DE MATERIAS (Reprobados)
-   ============================================================ */
-const listaMaterias = ["Lengua y Literatura", "Matemática", "Inglés", "Ciencias Naturales", "Ciencias Sociales", "Química", "Física", "Biología", "Geografía", "Economía", "Filosofía", "Vocación Productiva"];
-let seleccionadas = [];
-
-function gestionarAsignaturas() {
-    const cant = $('cantReprobado').value;
-    const contenedor = $('contenedorAsignaturas');
-    contenedor.innerHTML = "";
-    seleccionadas = [];
-    $('materiaReprobado').value = "";
-
-    if (!cant) return;
-
-    listaMaterias.forEach(materia => {
-        const div = document.createElement('div');
-        div.className = "materia-chip";
-        div.innerText = materia;
-        div.onclick = () => toggleMateria(div, materia, cant);
-        contenedor.appendChild(div);
-    });
-    validar('Reprobado');
-}
-
-function toggleMateria(elemento, materia, limite) {
-    const max = limite === "3 o más" ? 12 : parseInt(limite);
-    if (seleccionadas.includes(materia)) {
-        seleccionadas = seleccionadas.filter(m => m !== materia);
-        elemento.classList.remove('seleccionada');
-    } else {
-        if (seleccionadas.length < max) {
-            seleccionadas.push(materia);
-            elemento.classList.add('seleccionada');
-        } else {
-            mostrarToast(`⚠️ Solo puedes seleccionar ${max} asignatura(s)`, true);
-        }
-    }
-    $('materiaReprobado').value = seleccionadas.join(", ");
-    validar('Reprobado');
-}
-
-/* ============================================================
-   6. CONSULTA DE REPORTES: retiros y reprobados juntos (digitales + registrados aquí), agrupados por núcleo
-   ============================================================ */
-async function consultarDatos() {
-    const tipo = $('filtroTipo').value, corte = $('filtroCorte').value;
-    const contenedor = $('tablaResultados');
-    contenedor.innerHTML = "<p class='mensaje-vacio'>Buscando registros…</p>";
-
-    const payload = Object.assign(cred(), { tipo, soloMios: $('filtroSoloMios').checked });
-    if (corte) payload.corte = corte;
-    if (esEstadistica()) payload.nucleo = $('filtroNucleo').value;   // un NER ya va limitado a su núcleo por su código
-
-    try {
-        const r = await api('fReporte', payload);
-        if (!r.lista.length) { contenedor.innerHTML = "<p class='mensaje-vacio'>No se encontraron registros.</p>"; return; }
-
-        const esRetiros = tipo === 'Retiros';
-        const porNucleo = new Map();
-        r.lista.forEach(x => { const k = x.nucleo || 'S/N'; if (!porNucleo.has(k)) porNucleo.set(k, []); porNucleo.get(k).push(x); });
-
-        contenedor.innerHTML = Array.from(porNucleo, ([nucleo, filas]) => `
-            <h3 class="grupo-nucleo"><span class="sello-nucleo">${esc(nucleo)}</span>
-                <small>${esc(tipo)} · ${esc(r.corte)} corte · ${filas.length} registro${filas.length === 1 ? '' : 's'}</small></h3>
-            <table class="tabla-reporte">
-                <thead><tr>
-                    <th>Centro Educativo</th><th>Cód. Persona</th><th>Nombre</th>
-                    ${esRetiros ? '<th>Fecha</th>' : '<th>Cant.</th>'}
-                    <th>${esRetiros ? 'Causa del Retiro' : 'Materias Reprobadas'}</th><th>Registrado por</th><th>Origen</th>
-                </tr></thead>
-                <tbody>` + filas.map(x => `
-                    <tr>
-                        <td data-label="Centro">${esc(x.escuela)}</td><td data-label="Código">${esc(x.cp)}</td><td data-label="Nombre">${esc(x.nombre)}</td>
-                        <td data-label="${esRetiros ? 'Fecha' : 'Cantidad'}">${esc(esRetiros ? x.fecha : x.cant)}</td>
-                        <td data-label="${esRetiros ? 'Causa' : 'Materias'}" class="${esRetiros ? 'detalle-retiro' : 'detalle-reprobado'}">${esc(x.detalle || '-')}</td>
-                        <td data-label="Registrado por">${esc(x.registradoPor || '-')}</td>
-                        <td data-label="Origen">${x.origen === 'FISICO' ? 'Físico' : 'Digital'}</td>
-                    </tr>`).join('') + `</tbody></table>`).join('');
-    } catch (e) {
-        contenedor.innerHTML = `<p class='mensaje-vacio'>⚠️ ${esc(e.message)}</p>`;
-    }
-}
-
-/* ============================================================
-   7. ESTADÍSTICAS POR NÚCLEO (gráfico de barras, se auto-actualiza)
-   ============================================================ */
-let intervaloEstadisticas = null;
-
-function iniciarActualizacionEstadisticas() {
-    cargarEstadisticas();
-    intervaloEstadisticas = setInterval(cargarEstadisticas, 15000);
-}
-
-function detenerActualizacionEstadisticas() {
-    if (intervaloEstadisticas) {
-        clearInterval(intervaloEstadisticas);
-        intervaloEstadisticas = null;
-    }
-}
-
-function cargarEstadisticas() {
-    api('fEstadisticas', cred())
-        .then(datos => _renderEstadisticas(datos))
-        .catch(e => {
-            $('graficoNucleos').innerHTML = `<p class='mensaje-vacio'>❌ ${esc(e.message)}</p>`;
-        });
-}
-
-function _renderEstadisticas(datos) {
-    const retiros = (datos && datos.retiros) || {};
-    const reprobados = (datos && datos.reprobados) || {};
-
-    $('totalRetiros').innerText = Object.values(retiros).reduce((a, b) => a + b, 0);
-    $('totalReprobados').innerText = Object.values(reprobados).reduce((a, b) => a + b, 0);
-
-    const nucleos = Array.from(new Set([...Object.keys(retiros), ...Object.keys(reprobados)]));
-    nucleos.sort((a, b) => ((reprobados[b] || 0) + (retiros[b] || 0)) - ((reprobados[a] || 0) + (retiros[a] || 0)));
-
-    const contenedor = $('graficoNucleos');
-    if (nucleos.length === 0) {
-        contenedor.innerHTML = "<p class='mensaje-vacio'>Aún no hay registros.</p>";
-        return;
-    }
-
-    const max = Math.max(1, ...nucleos.map(n => Math.max(retiros[n] || 0, reprobados[n] || 0)));
-
-    contenedor.innerHTML = nucleos.map(n => {
-        const r = retiros[n] || 0;
-        const p = reprobados[n] || 0;
-        return `
-            <div class="fila-nucleo">
-                <div class="fila-nucleo-nombre">${esc(n)}</div>
-                <div class="fila-nucleo-barras">
-                    <div class="barra-track">
-                        <div class="barra-fill barra-retiro" style="width:${(r / max * 100).toFixed(1)}%"></div>
-                        <span class="barra-valor">${r}</span>
-                    </div>
-                    <div class="barra-track">
-                        <div class="barra-fill barra-reprobado" style="width:${(p / max * 100).toFixed(1)}%"></div>
-                        <span class="barra-valor">${p}</span>
-                    </div>
-                </div>
-            </div>`;
-    }).join('');
-}
-
-iniciarFlujoUsuario();
-    </script>
+iniciar();
+</script>
 </body>
 </html>
