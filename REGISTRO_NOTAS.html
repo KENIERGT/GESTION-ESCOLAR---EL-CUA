@@ -1878,36 +1878,68 @@ async function construirNotas(d){
 //      preescolar y primaria comunitaria en vertical). El Excel de arriba no cambia. ----
 const PDF_VERTICAL = ['PREESCOLAR', 'PRIMARIA COMUNITARIA'];
 const PDF_FIJAS = [['Nº', 20], ['C. UNICO', 36], ['ESCUELA', 118], ['MODALIDAD', 82], ['NIVEL', 46], ['SEC', 22], ['TURNO', 52], ['NOMBRE1', 58], ['NOMBRE2', 58], ['APELLIDO1', 60], ['APELLIDO2', 60], ['COD. DE PERSONA', 82]];
-const PDF_OBS = '(En preescolar, primero y segundo grado, todos los demás serán cualitativos), (A partir de tercero, son cualitativos: AEP, CEV, TAC, DERECHOS DE LA MUJER Y EEFF)';
+const PDF_OBS = 'Observaciones: (En preescolar, primero y segundo grado, todos los datos serán cualitativos), (A partir de tercero, son cualitativos: AEP, CEV, TAC, DERECHOS DE LA MUJER Y EEFF)';
+const PDF_AZUL = [214, 220, 228], PDF_LINEA = [150, 157, 168];   // celdas de encabezado y líneas apagadas, como el Excel
 
 // Orden y nombre de cada "hoja" (igual que las pestañas del Excel): todas las escuelas de un NER se pegan una debajo de otra
 const PDF_ORDEN = ['SECUNDARIA REGULAR', 'SECUNDARIA POR ENCUENTRO', 'SECUNDARIA EN EL CAMPO', 'PRIMARIA', 'PREESCOLAR', 'III-IV CICLO Y BACHILLERATO', 'PRIMARIA COMUNITARIA'];
 const PDF_TITULO_HOJA = {
-  'PRIMARIA':'PRIMARIA REGULAR, EXTRAEDAD, MULTIGRADO',
-  'PREESCOLAR':'PREESCOLAR FORMAL, COMUNITARIO Y TEMPRANA',
-  'III-IV CICLO Y BACHILLERATO':'III CICLO, IV CICLO Y BACHILLERATO'
+  'PRIMARIA':['PROGRAMA', 'PRIMARIA REGULAR, EXTRAEDAD, MULTIGRADO'],
+  'PREESCOLAR':['PROGRAMA', 'PREESCOLAR FORMAL, COMUNITARIO Y TEMPRANA'],
+  'III-IV CICLO Y BACHILLERATO':['PROGRAMA', 'III CICLO, IV CICLO Y BACHILLERATO'],
+  'PRIMARIA COMUNITARIA':['PROGRAMA', 'PRIMARIA COMUNITARIA']
 };
+
+// Fuentes del PDF: Aptos Narrow (texto) y Britannic Bold (marca de agua) son de Microsoft y no se pueden publicar en una página web.
+// Se usan equivalentes libres muy parecidos (Barlow Semi Condensed y Barlow Condensed). Si usted tiene las originales con licencia,
+// copie AptosNarrow.ttf, AptosNarrow-Bold.ttf y BritannicBold.ttf a una carpeta "fonts" junto a la página y se usan solas.
+const PDF_FUENTES = {
+  normal:['fonts/AptosNarrow.ttf', 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/barlowsemicondensed/BarlowSemiCondensed-Regular.ttf'],
+  bold:['fonts/AptosNarrow-Bold.ttf', 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/barlowsemicondensed/BarlowSemiCondensed-Bold.ttf'],
+  marca:['fonts/BritannicBold.ttf', 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/barlowcondensed/BarlowCondensed-ExtraBold.ttf']
+};
+let _fuentesPdf = null;
+function aBase64(buf){ let t = ''; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) t += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(t); }
+async function cargarFuentesPdf(){
+  if (_fuentesPdf) return _fuentesPdf;
+  const traer = async urls => { for (const u of urls){ try{ const r = await fetch(u); if (r.ok){ const b = await r.arrayBuffer(); if (b.byteLength > 20000) return aBase64(b); } }catch(e){} } return null; };
+  const [normal, bold, marca] = await Promise.all([traer(PDF_FUENTES.normal), traer(PDF_FUENTES.bold), traer(PDF_FUENTES.marca)]);
+  return _fuentesPdf = {normal, bold, marca};   // si alguna no carga, el PDF sale con la fuente estándar
+}
+function registrarFuentes(pdf, fu){
+  const r = {texto:'helvetica', marca:'helvetica'};
+  try{
+    if (fu.normal && fu.bold){
+      pdf.addFileToVFS('AptosN.ttf', fu.normal); pdf.addFont('AptosN.ttf', 'AptosN', 'normal');
+      pdf.addFileToVFS('AptosNB.ttf', fu.bold); pdf.addFont('AptosNB.ttf', 'AptosN', 'bold');
+      r.texto = 'AptosN';
+    }
+    if (fu.marca){ pdf.addFileToVFS('Britannic.ttf', fu.marca); pdf.addFont('Britannic.ttf', 'Britannic', 'bold'); r.marca = 'Britannic'; }
+  }catch(e){}
+  return r;
+}
 
 async function construirNotasPDF(d, imprimir, nombreArchivo){
   await cargarPDF();
-  const [gob, sinfo] = await Promise.all([ReportePDF.imagen('img/gobierno.jpg'), ReportePDF.imagen('img/sinfo.png')]);
+  const [gob, sinfo, fu] = await Promise.all([ReportePDF.imagen('img/gobierno.jpg'), ReportePDF.imagen('img/sinfo.png'), cargarFuentesPdf()]);
   const corteBase = d.corte.indexOf('-') >= 0 ? d.corte.split('-')[1] : d.corte, marca = `${corteBase} CORTE ${d.anio}`;
   const f = new Date(), dos = n => String(n).padStart(2, '0');
   const fechaHora = `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}   ${dos(f.getHours())}:${dos(f.getMinutes())}`;
   const orden = (a, b) => a.escuela.localeCompare(b.escuela, 'es') || cmpGrupo(a, b);
   const nucleos = [...new Set(d.docs.map(x => x.nucleo))].sort((a, b) => a.localeCompare(b, 'es'));
-  let pdf = null;
+  let pdf = null, FT = 'helvetica', FM = 'helvetica';
   nucleos.forEach(nucleo => PDF_ORDEN.forEach(hoja => {
     const docs = d.docs.filter(x => x.nucleo === nucleo && hojaDe(x.modalidad) === hoja && x.e.length).sort(orden);
     if (!docs.length) return;
     const H = HOJAS.find(h => h.hoja === hoja), vertical = PDF_VERTICAL.indexOf(hoja) >= 0, orient = vertical ? 'portrait' : 'landscape';
-    if (!pdf) pdf = new window.jspdf.jsPDF({orientation:orient, unit:'pt', format:'legal'}); else pdf.addPage('legal', orient);
-    const W = pdf.internal.pageSize.getWidth(), Hh = pdf.internal.pageSize.getHeight(), M = 18, TOP = vertical ? 92 : 80;
+    if (!pdf){ pdf = new window.jspdf.jsPDF({orientation:orient, unit:'pt', format:'legal'}); const r = registrarFuentes(pdf, fu); FT = r.texto; FM = r.marca; }
+    else pdf.addPage('legal', orient);
+    const W = pdf.internal.pageSize.getWidth(), Hh = pdf.internal.pageSize.getHeight(), M = 18, TOP = vertical ? 104 : 80;
     const nSub = H.cols.length, nExtra = nSub + (H.prom ? 1 : 0), nFijas = PDF_FIJAS.length;
     const anchos = PDF_FIJAS.map(c => c[1]).concat(H.cols.map(() => nSub <= 2 ? 62 : 33), H.prom ? [46] : []);
     const k = (W - 2 * M) / anchos.reduce((a, b) => a + b, 0);
     const estilos = {}; anchos.forEach((a, i) => estilos[i] = {cellWidth:a * k});
-    estilos[nFijas - 1] = Object.assign(estilos[nFijas - 1], {fontStyle:'bold', fontSize:vertical ? 7.5 : 8.5});   // código de persona, más grande
+    estilos[nFijas - 1] = Object.assign(estilos[nFijas - 1], {fontStyle:'bold', fontSize:vertical ? 9.5 : 11});   // código de persona, más grande
     estilos[0] = Object.assign(estilos[0], {textColor:[90, 90, 90]});
     const cabeza = PDF_FIJAS.map(c => c[0]).concat(H.cols.map(c => CAB[c] || (MATERIAS[c] || {x:c}).x), H.prom ? ['PROMEDIO'] : []);
     // una sola tabla continua: cada escuela y cada grupo siguen a la anterior, con la numeración corrida
@@ -1920,63 +1952,64 @@ async function construirNotasPDF(d, imprimir, nombreArchivo){
         const porCol = {}; Object.keys(vals).forEach(c => { const kk = colDe(c); if (porCol[kk] === undefined || porCol[kk] === '') porCol[kk] = vals[c]; });
         const esAg = (x.a || []).indexOf(e[0]) >= 0, ret = (x.ret || {})[e[0]];
         const fijas = [String(++n), String(Number(x.estab) || x.estab), x.escuela, x.modalidad, x.nivel, x.seccion, x.turno, e[1], e[2], e[3], e[4], esAg ? cpAgregado(e[0]) : e[0]].map(v => String(v ?? ''));
-        if (ret){ cuerpo.push(fijas.concat([{content:`RETIRADO (${ret[0] || 'SIN CAUSA'})`, colSpan:nExtra, styles:{halign:'left', fontStyle:'bold', textColor:[93, 104, 120]}}])); return; }
+        if (ret){ cuerpo.push(fijas.concat([{content:`RETIRADO (${ret[0] || 'SIN CAUSA'})`, colSpan:nExtra, styles:{halign:'center', fontStyle:'bold', textColor:[93, 104, 120]}}])); return; }
         const notas = H.cols.map(c => porCol[c] === undefined || porCol[c] === '' ? '' : String(porCol[c]));
         if (H.prom){ const pr = promedio(plan, vals); notas.push(pr === '' ? '' : String(pr)); }
         cuerpo.push(fijas.concat(notas));
       });
     });
     const modalidades = [...new Set(docs.map(x => x.modalidad))];
-    const modTxt = modalidades.length === 1 ? modalidades[0] : (PDF_TITULO_HOJA[hoja] || hoja);
-    const marcaDeAgua = () => {   // "III CORTE 2026" y el logo de estadística, al centro y detrás de la tabla
+    const [etiqueta, valorMod] = PDF_TITULO_HOJA[hoja] || ['MODALIDAD', modalidades.length === 1 ? modalidades[0] : hoja];
+    const marcaDeAgua = () => {   // "III CORTE 2026" (Britannic) y el logo de estadística, al centro y detrás de la tabla
       pdf.saveGraphicsState(); pdf.setGState(new pdf.GState({opacity:.24}));
-      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(vertical ? 46 : 70); pdf.setTextColor(95, 125, 205);
-      pdf.text(marca, W / 2, Hh / 2 - 6, {align:'center'});
+      pdf.setFont(FM, 'bold'); pdf.setFontSize(vertical ? 62 : 96); pdf.setTextColor(95, 125, 205);
+      pdf.text(marca, W / 2, Hh / 2 - 4, {align:'center'});
       pdf.restoreGraphicsState();
       if (sinfo){
         const aw = vertical ? 400 : 520, ah = aw / 6.22;
         pdf.saveGraphicsState(); pdf.setGState(new pdf.GState({opacity:.2}));
-        pdf.addImage(sinfo, 'PNG', (W - aw) / 2, Hh / 2 + 10, aw, ah, 'sinfo', 'FAST');
+        pdf.addImage(sinfo, 'PNG', (W - aw) / 2, Hh / 2 + 12, aw, ah, 'sinfo', 'FAST');
         pdf.restoreGraphicsState();
       }
     };
+    // celda del encabezado con borde y fondo; el texto se encoge para caber
+    const celda = (x, y, w, h, txt, fs, bold, fondo) => {
+      pdf.setDrawColor(...PDF_LINEA); pdf.setLineWidth(.5);
+      if (fondo) pdf.setFillColor(...PDF_AZUL);
+      pdf.rect(x, y, w, h, fondo ? 'FD' : 'S');
+      if (!txt) return;
+      pdf.setFont('times', bold ? 'bold' : 'normal'); pdf.setTextColor(0);
+      let t = txt, tam = fs; pdf.setFontSize(tam);
+      while (pdf.getTextWidth(t) > w - 6 && tam > 5.5){ tam -= .4; pdf.setFontSize(tam); }
+      const lineas = pdf.getTextWidth(t) > w - 6 ? pdf.splitTextToSize(t, w - 6) : [t];
+      const alto = lineas.length * tam * 1.12;
+      pdf.text(lineas, x + w / 2, y + h / 2 - alto / 2 + tam * .86, {align:'center'});
+    };
     const encabezado = () => {
-      pdf.setTextColor(0);
-      if (gob) pdf.addImage(gob, 'JPEG', M, 12, 104, 104 / 3.59, 'gobierno', 'FAST');
-      const cx = W / 2 + (vertical ? 40 : 0), ancho = W - 2 * M - 120;
-      pdf.setFont('times', 'bold'); pdf.setFontSize(vertical ? 8.2 : 11.5);
-      const titulo = pdf.splitTextToSize(`DIVISION DE ESTADISTICAS EDUCATIVAS - MINISTERIO DE EDUCACION - EL CUA - (PADRONES OFICIALES DE MATRICULA ${d.anio})`, ancho);
-      pdf.text(titulo, cx, 24, {align:'center'});
-      let y = 24 + titulo.length * (vertical ? 10 : 13) + 3;
-      pdf.setFontSize(vertical ? 7.6 : 10);
+      const logoW = vertical ? 92 : 120, bx = M + logoW, bw = W - 2 * M - logoW, hA = vertical ? 26 : 19, hB = vertical ? 28 : 19, hC = vertical ? 29 : 22, y0 = 12;
+      pdf.setDrawColor(...PDF_LINEA); pdf.setLineWidth(.5); pdf.rect(M, y0, logoW, hA + hB + hC);
+      if (gob) pdf.addImage(gob, 'JPEG', M + 4, y0 + (hA + hB + hC - (logoW - 8) / 3.59) / 2, logoW - 8, (logoW - 8) / 3.59, 'gobierno', 'FAST');
+      celda(bx, y0, bw, hA, `DIVISION DE ESTADÍSTICAS EDUCATIVAS  -  MINISTERIO DE EDUCACION - EL CUA  -  (PADRONES OFICIALES DE MATRICULA ${d.anio})`, vertical ? 8.6 : 11.5, true, true);
       const com = (d.comunidades || {})[nucleo] || '';
-      if (vertical){
-        pdf.text(`NUCLEO: ${nucleo}      COMUNIDAD: ${com}`, cx, y, {align:'center'}); y += 10;
-        pdf.text(pdf.splitTextToSize(`MODALIDAD: ${modTxt}`, ancho), cx, y, {align:'center'}); y += 9;
-      } else {
-        pdf.text(`NUCLEO:  ${nucleo}`, M + 130, y); pdf.text(`COMUNIDAD:  ${com}`, W * .40, y);
-        const mt = `MODALIDAD:  ${modTxt}`, libre = W - M - W * .66; let fs = 10;
-        while (pdf.getTextWidth(mt) > libre && fs > 6){ fs -= .5; pdf.setFontSize(fs); }   // que no se monte sobre lo de abajo
-        pdf.text(mt, W * .66, y); pdf.setFontSize(10); y += 11;
-      }
-      pdf.setFont('times', 'italic'); pdf.setFontSize(vertical ? 5.6 : 6.4);
-      pdf.text(pdf.splitTextToSize('Observaciones: ' + PDF_OBS, W - 2 * M - 40), vertical ? cx : W / 2, y, {align:'center'}); y += vertical ? 14 : 9;
-      pdf.setFont('times', 'bold'); pdf.setFontSize(vertical ? 7 : 8);
-      pdf.text(`REGISTRO DE CALIFICACIONES POR ASIGNATURA AÑO ${d.anio}`, vertical ? cx : W / 2, y, {align:'center'});
+      const col = vertical ? [.10, .22, .13, .19, .12, .24] : [.075, .25, .095, .22, .095, .265];
+      const nombres = ['NUCLEO:', nucleo, 'COMUNIDAD:', com, etiqueta + ':', valorMod];
+      let x = bx;
+      col.forEach((p, i) => { const w = bw * p; celda(x, y0 + hA, w, hB, nombres[i], vertical ? 7 : 11, i % 2 === 0 || i === 1 || i === 3 || i === 5, true); x += w; });
+      celda(bx, y0 + hA + hB, bw * .5, hC, PDF_OBS, vertical ? 5.6 : 6.8, true, true);
+      celda(bx + bw * .5, y0 + hA + hB, bw * .5, hC, `REGISTRO DE CALIFICACIONES POR ASIGNATURA AÑO ${d.anio}`, vertical ? 7.2 : 9, true, true);
       // pie: número de hoja, firma del director y fecha
-      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(0);
+      pdf.setFont(FT, 'normal'); pdf.setFontSize(8); pdf.setTextColor(0);
       pdf.text(String(pdf.getCurrentPageInfo().pageNumber), M + 4, Hh - 14);
       pdf.setDrawColor(0); pdf.setLineWidth(.6); pdf.line(W / 2 - 90, Hh - 24, W / 2 + 90, Hh - 24);
-      pdf.setFontSize(7); pdf.text('FIRMA Y SELLO DEL DIRECTOR', W / 2, Hh - 14, {align:'center'});
+      pdf.setFontSize(7.5); pdf.text('FIRMA Y SELLO DEL DIRECTOR', W / 2, Hh - 14, {align:'center'});
       pdf.text(fechaHora, W - M - 4, Hh - 14, {align:'right'});
     };
     pdf.autoTable({
       head:[cabeza], body:cuerpo, startY:TOP, margin:{top:TOP, left:M, right:M, bottom:34}, tableWidth:W - 2 * M, theme:'grid', columnStyles:estilos, rowPageBreak:'avoid',
-      styles:{font:'helvetica', fontSize:vertical ? 6.2 : 6.8, cellPadding:{top:2.2, bottom:2.2, left:1.5, right:1.5}, halign:'center', valign:'middle', lineColor:[0, 0, 0], lineWidth:.35, textColor:0, overflow:'linebreak', fillColor:false, minCellHeight:19},
-      headStyles:{fillColor:[222, 228, 240], textColor:0, fontStyle:'bold', fontSize:vertical ? 5.8 : 5.7, lineWidth:.4, minCellHeight:24},
+      styles:{font:FT, fontSize:vertical ? 7.4 : 8.2, cellPadding:{top:2.4, bottom:2.4, left:1.5, right:1.5}, halign:'center', valign:'middle', lineColor:PDF_LINEA, lineWidth:.4, textColor:0, overflow:'linebreak', fillColor:false, minCellHeight:21},
+      headStyles:{fillColor:PDF_AZUL, textColor:0, fontStyle:'bold', fontSize:vertical ? 6.6 : 6.4, lineWidth:.5, minCellHeight:26},
       didParseCell: c => {
         if (c.section === 'body' && c.column.index >= nFijas && /^\d+(\.\d+)?$/.test(c.cell.text.join('')) && Number(c.cell.text.join('')) < 60) { c.cell.styles.textColor = [192, 57, 43]; c.cell.styles.fontStyle = 'bold'; }
-        if (c.section === 'body' && [2, 3, 7, 8, 9, 10].indexOf(c.column.index) >= 0) c.cell.styles.halign = 'left';
       },
       willDrawPage: marcaDeAgua, didDrawPage: encabezado
     });
