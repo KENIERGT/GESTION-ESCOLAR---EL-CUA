@@ -310,6 +310,8 @@
         <div id="avisoAvance"></div>
         <div class="fila">
           <button class="btn" id="btnPadron">Descargar notas (Excel)</button>
+          <button class="btn" id="btnNotasPdf">Descargar notas (PDF)</button>
+          <label class="check"><input type="checkbox" id="chkNotasImprimir"> Enviar a imprimir al descargar</label>
           <label class="check"><input type="checkbox" id="chkPendientes"> Incluir grupos pendientes en blanco</label>
           <span class="muted" id="exportMsg"></span>
         </div>
@@ -1871,6 +1873,115 @@ async function construirNotas(d){
   });
   return wb.xlsx.writeBuffer();
 }
+
+// ---- PDF de notas por NER: igual a la hoja impresa del Excel oficial (una hoja por grupo, legal horizontal;
+//      preescolar y primaria comunitaria en vertical). El Excel de arriba no cambia. ----
+const PDF_VERTICAL = ['PREESCOLAR', 'PRIMARIA COMUNITARIA'];
+const PDF_FIJAS = [['Nº', 20], ['C. UNICO', 36], ['ESCUELA', 118], ['MODALIDAD', 82], ['NIVEL', 46], ['SEC', 22], ['TURNO', 52], ['NOMBRE1', 58], ['NOMBRE2', 58], ['APELLIDO1', 60], ['APELLIDO2', 60], ['COD. DE PERSONA', 82]];
+const PDF_OBS = '(En preescolar, primero y segundo grado, todos los demás serán cualitativos), (A partir de tercero, son cualitativos: AEP, CEV, TAC, DERECHOS DE LA MUJER Y EEFF)';
+
+async function construirNotasPDF(d, imprimir, nombreArchivo){
+  await cargarPDF();
+  const [gob, sinfo] = await Promise.all([ReportePDF.imagen('img/gobierno.jpg'), ReportePDF.imagen('img/sinfo.png')]);
+  const corteBase = d.corte.indexOf('-') >= 0 ? d.corte.split('-')[1] : d.corte, marca = `${corteBase} CORTE ${d.anio}`;
+  const f = new Date(), dos = n => String(n).padStart(2, '0');
+  const fechaHora = `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}   ${dos(f.getHours())}:${dos(f.getMinutes())}`;
+  const docs = d.docs.slice().sort((a, b) => a.nucleo.localeCompare(b.nucleo, 'es') || a.escuela.localeCompare(b.escuela, 'es') || cmpGrupo(a, b));
+  let pdf = null;
+  docs.forEach(x => {
+    const H = HOJAS.find(h => h.hoja === hojaDe(x.modalidad)), vertical = PDF_VERTICAL.indexOf(H.hoja) >= 0, orient = vertical ? 'portrait' : 'landscape';
+    const plan = x.pendiente ? planDe(x.modalidad, x.nivel, d.corte) : planDeCodigos(x.m, x.modalidad, x.nivel);
+    const filas = x.e.slice().sort(cmpFila);
+    if (!filas.length) return;
+    if (!pdf) pdf = new window.jspdf.jsPDF({orientation:orient, unit:'pt', format:'legal'}); else pdf.addPage('legal', orient);
+    const W = pdf.internal.pageSize.getWidth(), Hh = pdf.internal.pageSize.getHeight(), M = 18, TOP = vertical ? 92 : 80;
+    const nSub = H.cols.length, nExtra = nSub + (H.prom ? 1 : 0), nFijas = PDF_FIJAS.length;
+    const anchos = PDF_FIJAS.map(c => c[1]).concat(H.cols.map(() => nSub <= 2 ? 62 : 33), H.prom ? [46] : []);
+    const k = (W - 2 * M) / anchos.reduce((a, b) => a + b, 0);
+    const estilos = {}; anchos.forEach((a, i) => estilos[i] = {cellWidth:a * k});
+    estilos[nFijas - 1] = Object.assign(estilos[nFijas - 1], {fontStyle:'bold', fontSize:vertical ? 7.5 : 8.5});   // código de persona, más grande
+    estilos[0] = Object.assign(estilos[0], {textColor:[90, 90, 90]});
+    const cabeza = PDF_FIJAS.map(c => c[0]).concat(H.cols.map(c => CAB[c] || (MATERIAS[c] || {x:c}).x), H.prom ? ['PROMEDIO'] : []);
+    const cuerpo = filas.map((e, i) => {
+      const vals = {}; (x.m || []).forEach((c, j) => vals[c] = (e[5] || [])[j] ?? '');
+      const porCol = {}; Object.keys(vals).forEach(c => { const kk = colDe(c); if (porCol[kk] === undefined || porCol[kk] === '') porCol[kk] = vals[c]; });
+      const esAg = (x.a || []).indexOf(e[0]) >= 0, ret = (x.ret || {})[e[0]];
+      const fijas = [String(i + 1), String(Number(x.estab) || x.estab), x.escuela, x.modalidad, x.nivel, x.seccion, x.turno, e[1], e[2], e[3], e[4], esAg ? cpAgregado(e[0]) : e[0]].map(v => String(v ?? ''));
+      if (ret) return fijas.concat([{content:`RETIRADO (${ret[0] || 'SIN CAUSA'})`, colSpan:nExtra, styles:{halign:'left', fontStyle:'bold', textColor:[93, 104, 120]}}]);
+      const notas = H.cols.map(c => porCol[c] === undefined || porCol[c] === '' ? '' : String(porCol[c]));
+      if (H.prom){ const pr = promedio(plan, vals); notas.push(pr === '' ? '' : String(pr)); }
+      return fijas.concat(notas);
+    });
+    const marcaDeAgua = () => {   // "III CORTE 2026" y el logo de estadística, al centro y detrás de la tabla
+      pdf.saveGraphicsState(); pdf.setGState(new pdf.GState({opacity:.24}));
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(vertical ? 46 : 70); pdf.setTextColor(95, 125, 205);
+      pdf.text(marca, W / 2, Hh / 2 - 6, {align:'center'});
+      pdf.restoreGraphicsState();
+      if (sinfo){
+        const aw = vertical ? 400 : 520, ah = aw / 6.22;
+        pdf.saveGraphicsState(); pdf.setGState(new pdf.GState({opacity:.2}));
+        pdf.addImage(sinfo, 'PNG', (W - aw) / 2, Hh / 2 + 10, aw, ah, 'sinfo', 'FAST');
+        pdf.restoreGraphicsState();
+      }
+    };
+    const encabezado = data => {
+      pdf.setTextColor(0);
+      if (gob) pdf.addImage(gob, 'JPEG', M, 12, 104, 104 / 3.59, 'gobierno', 'FAST');
+      const cx = W / 2 + (vertical ? 40 : 0), ancho = W - 2 * M - 120;
+      pdf.setFont('times', 'bold'); pdf.setFontSize(vertical ? 8.2 : 11.5);
+      const titulo = pdf.splitTextToSize(`DIVISION DE ESTADISTICAS EDUCATIVAS - MINISTERIO DE EDUCACION - EL CUA - (PADRONES OFICIALES DE MATRICULA ${d.anio})`, ancho);
+      pdf.text(titulo, cx, 24, {align:'center'});
+      let y = 24 + titulo.length * (vertical ? 10 : 13) + 3;
+      pdf.setFontSize(vertical ? 7.6 : 10);
+      const com = (d.comunidades || {})[x.nucleo] || '';
+      if (vertical){
+        pdf.text(`NUCLEO: ${x.nucleo}      COMUNIDAD: ${com}`, cx, y, {align:'center'}); y += 10;
+        pdf.text(`MODALIDAD: ${x.modalidad}`, cx, y, {align:'center'}); y += 9;
+      } else {
+        pdf.text(`NUCLEO:  ${x.nucleo}`, M + 130, y); pdf.text(`COMUNIDAD:  ${com}`, W * .46, y); pdf.text(`MODALIDAD:  ${x.modalidad}`, W * .74, y); y += 11;
+      }
+      pdf.setFont('times', 'italic'); pdf.setFontSize(vertical ? 5.6 : 6.4);
+      pdf.text(pdf.splitTextToSize('Observaciones: ' + PDF_OBS, W - 2 * M - 40), vertical ? cx : W / 2, y, {align:'center'}); y += vertical ? 14 : 9;
+      pdf.setFont('times', 'bold'); pdf.setFontSize(vertical ? 7 : 8);
+      pdf.text(`REGISTRO DE CALIFICACIONES POR ASIGNATURA AÑO ${d.anio}`, vertical ? cx : W / 2, y, {align:'center'});
+      // pie: número de hoja, firma del director y fecha
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(0);
+      pdf.text(String(pdf.getCurrentPageInfo().pageNumber), M + 4, Hh - 14);
+      pdf.setDrawColor(0); pdf.setLineWidth(.6); pdf.line(W / 2 - 90, Hh - 24, W / 2 + 90, Hh - 24);
+      pdf.setFontSize(7); pdf.text('FIRMA Y SELLO DEL DIRECTOR', W / 2, Hh - 14, {align:'center'});
+      pdf.text(fechaHora, W - M - 4, Hh - 14, {align:'right'});
+    };
+    pdf.autoTable({
+      head:[cabeza], body:cuerpo, startY:TOP, margin:{top:TOP, left:M, right:M, bottom:34}, tableWidth:W - 2 * M, theme:'grid', columnStyles:estilos, rowPageBreak:'avoid',
+      styles:{font:'helvetica', fontSize:vertical ? 6.2 : 6.8, cellPadding:{top:2.2, bottom:2.2, left:1.5, right:1.5}, halign:'center', valign:'middle', lineColor:[0, 0, 0], lineWidth:.35, textColor:0, overflow:'linebreak', fillColor:false, minCellHeight:19},
+      headStyles:{fillColor:[222, 228, 240], textColor:0, fontStyle:'bold', fontSize:vertical ? 5.8 : 5.7, lineWidth:.4, minCellHeight:24},
+      didParseCell: c => {
+        if (c.section === 'body' && c.column.index >= nFijas && /^\d+(\.\d+)?$/.test(c.cell.text.join('')) && Number(c.cell.text.join('')) < 60) { c.cell.styles.textColor = [192, 57, 43]; c.cell.styles.fontStyle = 'bold'; }
+        if (c.section === 'body' && [2, 3, 7, 8, 9, 10].indexOf(c.column.index) >= 0) c.cell.styles.halign = 'left';
+      },
+      willDrawPage: marcaDeAgua, didDrawPage: encabezado
+    });
+  });
+  if (!pdf) throw new Error('No hay grupos con estudiantes en este filtro.');
+  pdf.save(nombreArchivo);
+  if (imprimir) ReportePDF.imprimir(pdf);
+}
+
+el('btnNotasPdf').addEventListener('click', async () => {
+  const msg = el('exportMsg'), b = el('btnNotasPdf'), imprimir = el('chkNotasImprimir').checked;
+  b.disabled = true; msg.innerHTML = spin('Preparando PDF…');
+  try{
+    const nuc = el('fNucleo').value, est = el('fEscuela').value;
+    const d = await api('exportar', Object.assign(cred(), {corte:R.corte, nucleo:nuc, estab:est, pendientes:!!el('chkPendientes').checked}));
+    if (!d.docs.length){ msg.textContent = 'No hay grupos con notas en este filtro.'; return; }
+    LS.set('rdc_imprimir_notas', imprimir);
+    const corteBase = d.corte.indexOf('-') >= 0 ? d.corte.split('-')[1] : d.corte, quien = est ? R.centros[est].n : nuc || 'todos los NER';
+    await construirNotasPDF(d, imprimir, `Notas ${corteBase} CORTE ${d.anio} - ${quien}.pdf`.replace(/[\\/:*?"<>|]+/g, ' '));
+    msg.textContent = imprimir ? 'PDF descargado y enviado a imprimir. Elija la impresora en la ventana que se abre.' : 'PDF descargado.';
+  }catch(e){ msg.textContent = 'Error: ' + e.message; }
+  finally{ b.disabled = false; }
+});
+el('chkNotasImprimir').checked = LS.get('rdc_imprimir_notas') !== false;
 
 // ============================================================
 //  Arranque

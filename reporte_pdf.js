@@ -103,5 +103,5 @@ async function generar({tipo, r, quien, imprimir}){
   if (imprimir) imprimirPDF(doc);
 }
 
-window.ReportePDF = {generar};
+window.ReportePDF = {generar, imagen, imprimir:imprimirPDF};
 })();
