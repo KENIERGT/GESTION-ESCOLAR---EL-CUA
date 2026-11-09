@@ -9,24 +9,28 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tema.css">
 <style>
-  main{max-width:860px; margin:0 auto; padding:32px 16px 60px;}
-  h2.pregunta{margin:0 0 6px; font-size:1.6rem; font-weight:600;}
-  .intro{margin:0 0 26px; color:var(--muted); max-width:60ch;}
+  main{max-width:880px; margin:0 auto; padding:44px 16px 70px;}
+  h2.pregunta{margin:0 0 8px; font-size:2rem; font-weight:600; letter-spacing:-.025em;}
+  .intro{margin:0 0 30px; color:var(--muted); max-width:60ch; font-size:1.05rem;}
   .opciones{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
-  a.op{display:flex; flex-direction:column; gap:14px; text-decoration:none; color:var(--text); background:var(--card); border:1.5px solid var(--border);
-       border-top:6px solid var(--primary); border-radius:var(--radius); padding:24px; transition:border-color .15s ease, background .15s ease, transform .15s ease;}
-  a.op:hover{border-color:var(--primary); background:var(--head);}
-  a.op:active{transform:translateY(1px);}
-  a.op.fisico{border-top-color:var(--gold);}
-  .icono{width:54px; height:54px; border-radius:14px; display:grid; place-items:center; background:var(--primary-soft); color:var(--primary);}
+  a.op{position:relative; overflow:hidden; display:flex; flex-direction:column; gap:14px; text-decoration:none; color:var(--text); background:var(--card); border:1px solid var(--border);
+       border-radius:20px; padding:28px; box-shadow:var(--sombra); transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease;}
+  a.op::before{content:""; position:absolute; left:0; right:0; top:0; height:5px; background:var(--primary);}
+  a.op::after{content:""; position:absolute; right:-60px; top:-60px; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle, color-mix(in srgb, var(--primary) 14%, transparent), transparent 70%); pointer-events:none;}
+  a.op:hover{border-color:color-mix(in srgb, var(--primary) 55%, var(--border)); box-shadow:var(--sombra-lg); transform:translateY(-3px);}
+  a.op:active{transform:translateY(0);}
+  a.op.fisico::before{background:var(--gold);}
+  a.op.fisico::after{background:radial-gradient(circle, color-mix(in srgb, var(--gold) 20%, transparent), transparent 70%);}
+  .icono{width:58px; height:58px; border-radius:16px; display:grid; place-items:center; background:var(--primary-soft); color:var(--primary); border:1px solid color-mix(in srgb, var(--primary) 20%, transparent);}
   .fisico .icono{background:var(--warn-bg); color:var(--warn);}
   .icono svg{width:28px; height:28px;}
-  a.op h3{margin:0; font-size:1.5rem; font-weight:600;}
+  a.op h3{margin:0; font-size:1.6rem; font-weight:600; letter-spacing:-.02em;}
   a.op p{margin:0; color:var(--muted); font-size:1rem; line-height:1.5; flex:1;}
-  a.op .ir{display:inline-flex; align-items:center; justify-content:center; min-height:var(--toque); padding:10px 18px; border-radius:var(--radius-sm); background:var(--primary); color:var(--on-primary); font-weight:600;}
+  a.op .ir{display:inline-flex; align-items:center; justify-content:center; min-height:var(--toque); padding:10px 18px; border-radius:var(--radius-sm); background:var(--primary); color:var(--on-primary); font-weight:600; box-shadow:0 1px 2px rgba(15,45,36,.18), inset 0 1px 0 rgba(255,255,255,.14); transition:background .15s ease;}
+  a.op:hover .ir{background:var(--primary-dark);}
   a.op.fisico .ir{background:var(--card); color:var(--text); border:1.5px solid var(--border);}
   a.op.fisico:hover .ir{border-color:var(--primary);}
-  .ayuda{margin-top:22px; padding:18px 20px; border-radius:var(--radius); background:var(--primary-soft); border-left:5px solid var(--primary);}
+  .ayuda{margin-top:24px; padding:18px 22px; border-radius:16px; background:var(--primary-soft); border:1px solid color-mix(in srgb, var(--primary) 22%, transparent);}
   .ayuda b{display:block; margin-bottom:4px;}
   .ayuda p{margin:0; color:var(--muted); font-size:.98rem;}
   @media (max-width:640px){ .opciones{grid-template-columns:1fr;} h2.pregunta{font-size:1.35rem;} }
