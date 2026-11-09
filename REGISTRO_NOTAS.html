@@ -234,6 +234,7 @@
           <div><h2 id="panelTitulo">Avance de digitación</h2><p class="sub" id="panelSub"></p></div>
           <div class="fila">
             <button class="btn sec sm" id="btnPermisos" hidden>Periodo y permisos</button>
+            <button class="btn sec sm" id="btnMatricula" hidden>Cargar matrícula</button>
             <button class="btn sec sm" id="btnClaves" hidden>Claves de los NER</button>
             <button class="btn sec sm" id="btnRefrescar">Actualizar</button>
             <button class="btn sec sm" id="btnLogout">Cerrar sesión</button>
@@ -288,6 +289,20 @@
         <h3 class="sub-h">Quién puede registrar notas</h3>
         <div class="fila"><button class="btn sec sm" id="btnAbrirTodos">Permitir a todos los NER</button><button class="btn sec sm" id="btnBloquearTodos">Bloquear a todos los NER</button></div>
         <div class="lista" id="listaPermisos"></div>
+      </div>
+
+      <div class="card" id="matriculaCard" hidden>
+        <div class="card-h">
+          <div><h2>Cargar matrícula desde Excel</h2><p class="sub">Suba el Excel de matrícula (el que baja del SIGEE o el de la hoja MA). Elija a qué año y corte pertenece, revise el resumen y cárguelo. No toca las notas ya registradas.</p></div>
+          <button class="btn sec sm" id="btnCerrarMatricula">Cerrar</button>
+        </div>
+        <div class="fila">
+          <div><label for="mAnio">Año</label><select id="mAnio"><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option></select></div>
+          <div><label for="mCorte">Corte</label><select id="mCorte"><option value="I">I Corte</option><option value="II">II Corte</option><option value="III">III Corte</option><option value="IV">IV Corte</option></select></div>
+          <div><label for="mArchivo">Archivo Excel (.xlsx)</label><input type="file" id="mArchivo" accept=".xlsx"></div>
+        </div>
+        <div id="matriculaInfo"></div>
+        <div class="fila" style="margin-top:12px"><button class="btn" id="btnSubirMatricula" hidden>Cargar a la base de datos</button></div>
       </div>
 
       <div class="card" id="clavesCard" hidden>
@@ -379,9 +394,9 @@ const MATERIAS = {
   CCNN:{l:'Ciencias Naturales', x:'CCNN'}, CCSS:{l:'Ciencias Sociales', x:'CCSS'},
   QUIMICA:{l:'Química', x:'QUIMICA'}, FISICA:{l:'Física', x:'FISICA'}, BIOLOGIA:{l:'Biología', x:'BIOLOGIA'},
   HIST:{l:'Historia', x:'HIST'}, GEOGRAFIA:{l:'Geografía', x:'GEOGRAFIA'}, SOCIOLOGIA:{l:'Sociología', x:'SOCIOLOGIA'},
-  ECONOMIA:{l:'Economía', x:'ECONOMIA'}, FILO:{l:'Filosofía', x:'FILO'}, VP:{l:'Vocación Productiva', x:'VP', q:1},
+  ECONOMIA:{l:'Economía', x:'ECONOMIA'}, FILO:{l:'Filosofía', x:'FILO'}, VP:{l:'Vocación Productiva', x:'VP'},
   TAC:{l:'Talleres de Arte y Cultura', x:'TAC', q:1}, CV:{l:'Creciendo en Valores', x:'CV', q:1},
-  DDM:{l:'Derechos y Dignidad de las Mujeres', x:'DDM', q:1}, EMPPROS:{l:'Emprendo y Prospero', x:'EMP Y PROS'},
+  DDM:{l:'Derechos y Dignidad de las Mujeres', x:'DDM', q:1}, EMPPROS:{l:'Emprendo y Prospero', x:'EMP Y PROS', q:1},
   AFPT:{l:'AFTP', x:'AFTP'}, MEDAMB:{l:'Medio Ambiente', x:'MED AMB'},
   VAL:{l:'Valoración de los Aprendizajes', x:'VAL. APRENDI', q:1},
   // Bachillerato comunitario de JyA
@@ -1036,7 +1051,7 @@ function entrarPanel(cargar){
   el('panelSub').textContent = `${R.user.nombre || R.user.usuario} · ${R.user.rol === 'ADMIN' ? 'Administrador (puede corregir notas)' : 'Dirección (solo consulta)'}`;
   R.corte = el('fCorte').value = (LS.get('rdc_init') || {}).corte || D.corte;
   R.anio = el('fAnio').value = (LS.get('rdc_init') || {}).anio || D.anio || '2026';
-  el('btnClaves').hidden = el('btnPermisos').hidden = R.user.rol !== 'ADMIN';
+  el('btnClaves').hidden = el('btnPermisos').hidden = el('btnMatricula').hidden = R.user.rol !== 'ADMIN';
   if (cargar) cargarResumen();
   setTimeout(() => cargarExcelJS().catch(() => {}), 1500);
 }
@@ -1306,6 +1321,122 @@ async function verGrupo(id, editar){
     }catch(e){ el('bGuardarEd').disabled = false; el('detalleMsg').innerHTML = `<div class="msg err">${esc(e.message)}</div>`; }
   });
 }
+
+// ============================================================
+//  CARGAR MATRÍCULA (Excel -> base de datos), solo administrador
+//  Sirve el Excel crudo del SIGEE (47 columnas) y el de la hoja MA (19): las columnas se buscan por su encabezado.
+// ============================================================
+const COLS_MATRICULA = {
+  cod_est:['codest','codunico'], cod_centro:['codcentro'], centro:['centro','centroeducativo'], programa:['programa','niveleducativo'],
+  modalidad:['modalidad'], dependencia:['dependencia'], nivel:['nivel','nivelgrado'], seccion:['seccion','secc'], turno:['turno'],
+  cod_persona:['codpersona','codunicoper'], nombre1:['nombre1','primernombre'], nombre2:['nombre2','segundonombre'],
+  apellido1:['apellido1','primerapellido'], apellido2:['apellido2','segundoapellido'],
+  direccion:['direccionalumno','direccion','direccionestudiante'], tutor:['tutor','nombreresponsable','responsable'], ctutor:['cedulatutor','cedularesponsable'],
+  madre:['madre'], cmadre:['cedmadre'], padre:['padre'], cpadre:['cedpadre'], ner:['nucleo','ner']
+};
+const COLS_OBLIGATORIAS = {cod_est:'Cód_Est', programa:'Programa', modalidad:'Modalidad', nivel:'Nivel', seccion:'Sección', turno:'Turno', cod_persona:'Cod Persona', nombre1:'Nombre1', apellido1:'Apellido1'};
+const normCol = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const celdaTxt = v => {
+  if (v && typeof v === 'object') v = v.result ?? v.text ?? (v.richText ? v.richText.map(t => t.text).join('') : '');
+  return String(v ?? '').replace(/\s+/g, ' ').trim();
+};
+let LEIDO = null;   // {file, filas, omitidas}: el archivo ya leído, para no repetirlo al cambiar año o corte
+async function leerMatricula(file){
+  await cargarExcelJS();
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(await file.arrayBuffer());
+  for (const ws of wb.worksheets){
+    let pos = null, omitidas = 0; const filas = [];
+    ws.eachRow({includeEmpty:false}, row => {
+      const v = row.values;   // empieza en la posición 1
+      if (!pos){
+        const cand = {};
+        v.forEach((h, i) => { const k = normCol(celdaTxt(h)); for (const c in COLS_MATRICULA) if (cand[c] == null && COLS_MATRICULA[c].includes(k)) cand[c] = i; });
+        if (Object.keys(COLS_OBLIGATORIAS).every(c => cand[c] != null)) pos = cand;
+        return;
+      }
+      const g = c => pos[c] == null ? '' : celdaTxt(v[pos[c]]);
+      const f = {};
+      ['cod_est','cod_centro','centro','programa','modalidad','dependencia','nivel','seccion','turno','cod_persona','nombre1','nombre2','apellido1','apellido2','direccion','ner'].forEach(c => f[c] = g(c));
+      if (!f.cod_est || !(f.nombre1 || f.apellido1)){ omitidas++; return; }
+      const r = [['tutor','ctutor'], ['madre','cmadre'], ['padre','cpadre']].find(([a]) => g(a));   // responsable: tutor, si no madre, si no padre
+      f.responsable = r ? g(r[0]) : ''; f.cedula = r ? g(r[1]) : '';
+      filas.push(f);
+    });
+    if (pos) return {file, filas, omitidas};
+  }
+  throw new Error('No encontré las columnas de la matrícula. El Excel debe tener, como mínimo: ' + Object.values(COLS_OBLIGATORIAS).join(', ') + '.');
+}
+function abrirMatricula(){
+  el('matriculaCard').hidden = false;
+  el('mAnio').value = R.anio; el('mCorte').value = R.corte;
+  el('mArchivo').value = ''; LEIDO = null; el('matriculaInfo').innerHTML = ''; el('btnSubirMatricula').hidden = true;
+  el('matriculaCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+async function revisarMatricula(){
+  const file = el('mArchivo').files[0], info = el('matriculaInfo'), btn = el('btnSubirMatricula');
+  btn.hidden = true;
+  if (!file){ info.innerHTML = ''; LEIDO = null; return; }
+  try{
+    if (!LEIDO || LEIDO.file !== file){
+      info.innerHTML = `<div class="msg ok">${spin('Leyendo el archivo… puede tardar unos segundos.')}</div>`;
+      LEIDO = await leerMatricula(file);
+    }
+    const {filas, omitidas} = LEIDO;
+    if (!filas.length) throw new Error('El archivo no trae estudiantes.');
+    const escuelas = new Map(filas.map(f => [f.cod_est, f.ner]));
+    const grupos = new Set(filas.map(f => [f.cod_est, f.programa, f.modalidad, f.nivel, f.seccion, f.turno].join('|')));
+    const sinCod = filas.filter(f => !f.cod_persona).length;
+    info.innerHTML = `<div class="msg ok">${spin('Revisando contra la base de datos…')}</div>`;
+    const rev = await api('cargarPadron', Object.assign(cred(), {paso:'revisar', corte:el('mCorte').value, anio:el('mAnio').value, escuelas:[...escuelas]}), 0);
+    const nom = `${el('mCorte').value} corte ${el('mAnio').value}`;
+    info.innerHTML = `<div class="msg ok"><b>${filas.length.toLocaleString('es')}</b> estudiantes en <b>${escuelas.size}</b> escuelas y <b>${grupos.size}</b> grupos. Se cargarán al <b>${esc(nom)}</b>.</div>` +
+      (omitidas ? `<div class="msg warn">${omitidas} filas sin escuela o sin nombre se ignoran.</div>` : '') +
+      (sinCod ? `<div class="msg warn">${sinCod} estudiantes no traen código de persona. Se cargan igual, pero no se podrán retirar ni reprobar por código.</div>` : '') +
+      (rev.desconocidas.length ? `<div class="msg err">Estas escuelas no están en el catálogo y el archivo no dice a qué NER pertenecen, por eso NO se cargarán: ${esc(rev.desconocidas.join(', '))}.</div>` : '') +
+      (rev.existentes ? `<div class="msg warn">El ${esc(nom)} ya tiene <b>${rev.existentes.toLocaleString('es')}</b> estudiantes cargados. ¿Qué desea hacer?</div>
+        <label class="check"><input type="radio" name="mModo" value="agregar" checked> Agregar solo los estudiantes que faltan (no toca los que ya están ni sus notas)</label>
+        <label class="check"><input type="radio" name="mModo" value="reemplazar" ${rev.enUso ? 'disabled' : ''}> Reemplazar toda la matrícula de este periodo ${rev.enUso ? '(no disponible: ya hay notas o retiros registrados)' : '(la borra y la vuelve a cargar)'}</label>` : '');
+    btn.hidden = false;
+  }catch(e){ LEIDO = null; info.innerHTML = `<div class="msg err">${esc(e.message)}</div>`; }
+}
+el('btnMatricula').addEventListener('click', abrirMatricula);
+el('btnCerrarMatricula').addEventListener('click', () => el('matriculaCard').hidden = true);
+el('btnLogout').addEventListener('click', () => { el('matriculaCard').hidden = true; });
+el('mArchivo').addEventListener('change', revisarMatricula);
+el('mAnio').addEventListener('change', revisarMatricula);
+el('mCorte').addEventListener('change', revisarMatricula);
+el('btnSubirMatricula').addEventListener('click', async e => {
+  const b = e.currentTarget, info = el('matriculaInfo'), sel = document.querySelector('input[name="mModo"]:checked');
+  const modo = sel ? sel.value : 'nuevo', corte = el('mCorte').value, anio = el('mAnio').value;
+  if (!LEIDO) return;
+  if (modo === 'reemplazar' && !confirmar2(b, '¿Reemplazar todo? Clic otra vez')) return;
+  const {filas} = LEIDO, LOTE = 1000;
+  let insertados = 0, leidas = 0, sinEscuela = new Set(), nuevas = 0;
+  b.disabled = true;
+  ['mArchivo','mAnio','mCorte'].forEach(i => el(i).disabled = true);
+  const aviso = (cls, html) => info.insertAdjacentHTML('beforeend', `<div class="msg ${cls}" id="mEstado">${html}</div>`);
+  try{
+    for (let i = 0; i < filas.length; i += LOTE){
+      document.getElementById('mEstado')?.remove();
+      aviso('ok', `${spin('Cargando…')} ${Math.min(i, filas.length).toLocaleString('es')} de ${filas.length.toLocaleString('es')} <progress max="${filas.length}" value="${i}" style="width:100%"></progress>`);
+      const r = await api('cargarPadron', Object.assign(cred(), {corte, anio, modo, primero:i === 0, filas:filas.slice(i, i + LOTE)}), i === 0 ? 0 : 1);
+      insertados += r.insertados; leidas += r.leidas; nuevas += r.escuelasNuevas; r.sinEscuela.forEach(x => sinEscuela.add(x));
+    }
+    document.getElementById('mEstado')?.remove();
+    aviso('ok', `Listo: se cargaron <b>${insertados.toLocaleString('es')}</b> estudiantes al ${esc(corte)} corte ${esc(anio)}` +
+      (leidas > insertados ? ` (${(leidas - insertados).toLocaleString('es')} ya estaban)` : '') + '.' +
+      (nuevas ? ` Se agregaron ${nuevas} escuelas nuevas al catálogo.` : '') +
+      (sinEscuela.size ? `<br>No se cargaron las escuelas sin NER conocido: ${esc([...sinEscuela].join(', '))}.` : ''));
+    LEIDO = null; el('mArchivo').value = ''; b.hidden = true;
+    if (corte === R.corte && anio === R.anio) cargarResumen();
+  }catch(err){
+    document.getElementById('mEstado')?.remove();
+    aviso('err', `${esc(err.message)}<br>Se alcanzaron a cargar ${insertados.toLocaleString('es')} estudiantes. Para terminar, vuelva a elegir el mismo archivo y use «Agregar solo los estudiantes que faltan».`);
+  }finally{
+    b.disabled = false; ['mArchivo','mAnio','mCorte'].forEach(i => el(i).disabled = false);
+  }
+});
 
 // ============================================================
 //  EXPORTACIONES
