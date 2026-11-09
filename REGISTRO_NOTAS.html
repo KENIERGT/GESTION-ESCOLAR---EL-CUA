@@ -122,17 +122,53 @@
   /* Herramientas del panel (permisos, claves, matrícula, listas y notas del grupo): se abren en una ventana encima, una a la vez */
   #matriculaCard, #clavesCard, #permisosCard, #agregadosCard, #retiradosCard, #detalleCard{position:fixed; z-index:50; left:50%; top:50%; transform:translate(-50%,-50%);
     width:min(1040px, calc(100vw - 24px)); max-height:calc(100vh - 32px); overflow:auto; margin:0; padding-top:30px; box-shadow:var(--sombra-lg); overscroll-behavior:contain;}
+  #matriculaCard .card-h, #clavesCard .card-h, #permisosCard .card-h, #agregadosCard .card-h, #retiradosCard .card-h, #detalleCard .card-h{margin-top:0;}
   #matriculaCard, #clavesCard, #permisosCard{width:min(780px, calc(100vw - 24px));}
-  #matriculaCard .card-h, #clavesCard .card-h, #permisosCard .card-h, #agregadosCard .card-h, #retiradosCard .card-h, #detalleCard .card-h{padding-right:48px;}
-  #btnCerrarMatricula, #btnCerrarClaves, #btnCerrarPermisos, #btnCerrarAg, #btnCerrarRet{display:none;}
+    #btnCerrarMatricula, #btnCerrarClaves, #btnCerrarPermisos, #btnCerrarAg, #btnCerrarRet{display:none;}
   #fondoModal{position:fixed; inset:0; z-index:40; background:rgba(6,18,14,.58); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);}
-  .cerrar-x{position:sticky; float:right; top:0; z-index:3; width:40px; height:40px; margin:-14px -14px 0 8px; border-radius:50%; border:1px solid var(--border); background:var(--card); color:var(--text);
-    font-size:1.05rem; line-height:1; cursor:pointer; box-shadow:var(--sombra); transition:background .15s ease, border-color .15s ease;}
-  .cerrar-x:hover{background:var(--head); border-color:var(--primary);}
+  .modal-barra{position:sticky; top:-30px; z-index:3; display:flex; justify-content:space-between; align-items:center; gap:8px; margin:-30px -26px 14px; padding:12px 26px;
+    background:color-mix(in srgb, var(--card) 94%, transparent); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); border-bottom:1px solid var(--line);}
+  .modal-barra .btn{min-height:38px; padding:6px 14px; font-size:.92rem;}
+  .modal-barra .cerrar-x{width:38px; height:38px; padding:0; border-radius:50%; font-size:1rem; line-height:1;}
   @media (max-width:640px){
-    #matriculaCard, #clavesCard, #permisosCard, #agregadosCard, #retiradosCard, #detalleCard{width:calc(100vw - 16px); max-height:calc(100vh - 16px); padding:22px 16px 16px;}
+    #matriculaCard, #clavesCard, #permisosCard, #agregadosCard, #retiradosCard, #detalleCard{left:0; top:auto; bottom:0; transform:none; width:100%; max-height:92vh; border-radius:18px 18px 0 0; padding:24px 16px calc(16px + env(safe-area-inset-bottom,0px));}
+    .modal-barra{top:-24px; margin:-24px -16px 12px; padding:10px 16px;}
   }
-  @media (max-width:640px){ nav.tabs .wrap{gap:4px; padding:8px;} .tab{flex:1; padding:6px 8px; border-radius:16px; font-size:.9rem; line-height:1.2; min-height:44px;} }
+  @media (max-width:640px){ nav.tabs .wrap{gap:4px; padding:6px 8px;} .tab{flex:1; padding:5px 8px; border-radius:14px; font-size:.88rem; line-height:1.2; min-height:40px;} }
+  @media (max-width:600px){
+    main{padding:12px 10px 70px;}
+    .card h2{font-size:1.08rem;}
+    .sub{font-size:.88rem; margin-top:4px;}
+    .card-h{margin-bottom:12px;}
+    .grid{gap:12px;}
+    .leyenda{gap:4px 12px; font-size:.76rem; margin-bottom:10px;}
+    .leyenda span:last-child{display:none;}
+    .barra-grupo{padding:10px 13px; font-size:.9rem;}
+    /* cada estudiante: sus asignaturas de a dos por fila, con el nombre encima de la casilla */
+    table.notas tbody tr{display:grid; grid-template-columns:1fr 1fr; gap:8px 10px; padding:12px; margin-bottom:10px;}
+    table.notas tbody td{flex-direction:column; align-items:stretch; justify-content:flex-end; gap:3px; padding:0; text-align:left;}
+    table.notas tbody td::before{font-size:.72rem; line-height:1.2;}
+    .nombre-col{grid-column:1 / -1; padding-bottom:8px !important; margin-bottom:0; font-size:.95rem;}
+    .gi, .qs{width:100%; height:42px; min-height:42px;}
+    .rv{text-align:left;}
+    /* barra de guardado */
+    .acciones{gap:6px; margin-bottom:0;}
+    .acciones .muted{width:100%; font-size:.8rem;}
+    .acciones .fila{width:100%; flex-wrap:nowrap;}
+    .acciones .btn{flex:1; white-space:nowrap; padding:7px 8px; min-height:42px; font-size:.9rem;}
+    /* panel de dirección */
+    .card-h .fila{width:100%; gap:6px;}
+    .card-h .fila .btn.sm{flex:1 1 calc(50% - 6px); padding:5px 6px; font-size:.8rem; min-height:36px; white-space:nowrap;}
+    #panel > .card:first-child .grid{grid-template-columns:1fr 1fr; gap:10px;} #panel > .card:first-child .grid > :nth-child(n+3){grid-column:1 / -1;}
+    #limiteBadge{font-size:.72rem; padding:3px 10px 3px 8px;}
+    .stats{grid-template-columns:1fr 1fr; gap:8px; margin:12px 0;}
+    .stat{padding:11px 12px 10px; border-radius:12px;}
+    .stat b{font-size:1.35rem;}
+    .stat span{font-size:.76rem; line-height:1.3; display:block;}
+    .lista th{padding:9px 10px; font-size:.78rem;}
+    .lista td{padding:10px;}
+    .fila{gap:6px;}
+  }
 </style>
 </head>
 <body>
@@ -1627,17 +1663,30 @@ el('btnSubirMatricula').addEventListener('click', async e => {
 
 // ---- Ventanas del panel: una sola abierta a la vez, con fondo, botón ✕, clic afuera y Escape ----
 const MODALES = ['matriculaCard', 'clavesCard', 'permisosCard', 'agregadosCard', 'retiradosCard', 'detalleCard'];
-function cerrarModales(){ MODALES.forEach(id => el(id).hidden = true); }
+const pila = [];   // ventanas por las que se pasó, para el botón Volver
+function cerrarModales(){ pila.length = 0; MODALES.forEach(id => el(id).hidden = true); }
 MODALES.forEach(id => {
   const card = el(id);
   card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true');
-  const x = document.createElement('button');
-  x.type = 'button'; x.className = 'cerrar-x'; x.title = 'Cerrar'; x.setAttribute('aria-label', 'Cerrar'); x.textContent = '✕';
-  x.addEventListener('click', () => card.hidden = true);
-  card.insertBefore(x, card.firstChild);
+  const barra = document.createElement('div');
+  barra.className = 'modal-barra';
+  barra.innerHTML = '<button type="button" class="btn sec sm volver-m">← Volver</button><button type="button" class="btn sec cerrar-x" title="Cerrar" aria-label="Cerrar">✕</button>';
+  barra.querySelector('.volver-m').addEventListener('click', () => {   // vuelve a la ventana de la que venía; si no venía de otra, cierra
+    const antes = pila.pop();
+    card.hidden = true;
+    if (antes) el(antes).hidden = false;
+  });
+  barra.querySelector('.cerrar-x').addEventListener('click', cerrarModales);
+  card.insertBefore(barra, card.firstChild);
   new MutationObserver(() => {
-    if (!card.hidden){ MODALES.forEach(o => { if (o !== id) el(o).hidden = true; }); card.scrollTop = 0; }
+    if (!card.hidden){
+      const otras = MODALES.filter(o => o !== id && !el(o).hidden);
+      if (otras.length) pila.push(otras[0]);
+      otras.forEach(o => el(o).hidden = true);
+      card.scrollTop = 0;
+    }
     const abierta = MODALES.some(o => !el(o).hidden);
+    if (!abierta) pila.length = 0;
     el('fondoModal').hidden = !abierta; document.body.style.overflow = abierta ? 'hidden' : '';
   }).observe(card, {attributes:true, attributeFilter:['hidden']});
 });

@@ -92,4 +92,18 @@ select:disabled, input:disabled{background:var(--head); opacity:.6; cursor:not-a
 .muted{color:var(--muted); font-size:.9rem;}
 
 @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
-@media (max-width:640px){ .card{padding:18px;} .banda h1{font-size:1.35rem;} }
+@media (max-width:640px){
+  :root{--toque:44px;}
+  .card{padding:16px; border-radius:14px; margin-bottom:14px;}
+  .banda{padding:calc(10px + env(safe-area-inset-top,0px)) 14px 12px;}
+  .banda .wrap{gap:8px;}
+  .banda small{font-size:.74rem; margin-bottom:1px;}
+  .banda h1{font-size:1.2rem;}
+  .corte{font-size:.78rem; padding:4px 11px 4px 9px; gap:6px;}
+  .corte::before{width:7px; height:7px; box-shadow:0 0 0 2px rgba(200,150,43,.28);}
+  .btn, .btn-enviar{padding:9px 16px; font-size:.95rem;}
+  .btn.sm{min-height:34px; padding:5px 11px; font-size:.84rem;}
+  label{font-size:.84rem; margin-bottom:4px;}
+  input[type=text], input[type=password], input[type=date], select{padding:8px 12px; font-size:16px;}
+  .msg{padding:10px 13px; font-size:.9rem;}
+}

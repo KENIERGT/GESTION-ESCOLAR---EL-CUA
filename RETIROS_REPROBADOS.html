@@ -113,6 +113,27 @@
          font-weight:500; box-shadow:0 14px 34px -10px rgba(0,0,0,.45); opacity:0; pointer-events:none; transition:all .25s ease; z-index:999; max-width:92vw;}
   .toast.mostrar{opacity:1; transform:translateX(-50%) translateY(0);}
   .toast.error{background:var(--danger); color:#fff;}
+  @media (max-width:640px){
+    main{padding:14px 10px 70px;}
+    .acceso{margin:12px auto; padding:0 10px;}
+    .barra .wrap{padding:6px 12px;}
+    nav.tabs .wrap{padding:6px 8px;}
+    .tab{padding:6px 12px; min-height:40px; font-size:.88rem; gap:6px;} .tab svg{width:18px; height:18px;}
+    .sub{font-size:.9rem; margin-bottom:12px;}
+    .acceso h2, main h2{font-size:1.15rem;}
+    .campo{margin-bottom:12px;}
+    .modo, .segmento{margin-bottom:12px;}
+    .modo button, .segmento button{min-height:38px; font-size:.92rem;}
+    .codigo{font-size:1.15rem !important; min-height:50px !important;}
+    .cantidad button{min-height:44px;}
+    .materias{grid-template-columns:1fr 1fr; gap:6px;}
+    .chip-m{min-height:42px; font-size:.88rem; padding:6px 8px;}
+    .filtros{gap:10px;}
+    .acciones{gap:8px;} .acciones .btn{flex:1 1 calc(50% - 8px); padding:8px 10px; font-size:.9rem;}
+    .totales{gap:8px; margin-bottom:16px;} .total{padding:12px 14px;} .total b{font-size:1.6rem;}
+    .sesion{position:static;}
+    .tabla-reporte tr{padding:8px 12px; margin-bottom:8px;}
+  }
 </style>
 </head>
 <body>
@@ -508,21 +529,34 @@ async function descargarPDF(){
     const ret = tipoReporte === 'Retiros', cols = ret ? COL_RETIROS : COL_REPROBADOS, corteTxt = r.corte + ' CORTE';
     const titulo = ret ? `Estudiantes con Retiro de matrícula ${r.anio}` : 'Estudiantes Reprobados en 1, 2, 3 o más asignaturas';
     const doc = new window.jspdf.jsPDF({orientation:'landscape', unit:'pt', format:'legal'});   // 14 x 8.5 pulgadas, como la hoja oficial
-    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 10, TOP = 138, BAJO = 46;
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 10, TOP = 74, BAJO = 46;
     const k = (W - 2 * M) / cols.reduce((a, c) => a + c[1], 0);
     const estilos = {}; cols.forEach((c, i) => { estilos[i] = {cellWidth:c[1] * k}; if (c[3] === 'codigo') estilos[i] = Object.assign(estilos[i], {fontStyle:'bold', fontSize:9}); });
 
     let nerActual = '';
+    const marcaDeAgua = () => {   // logo de estadística al centro de la hoja, tenue y detrás de la tabla
+      if (!sinfo) return;
+      const ancho = 760, alto = ancho / 6.22;
+      doc.saveGraphicsState(); doc.setGState(new doc.GState({opacity:.10}));
+      doc.addImage(sinfo, 'PNG', (W - ancho) / 2, (H - alto) / 2, ancho, alto, 'sinfo', 'FAST');   // el alias evita repetir la imagen en cada hoja
+      doc.restoreGraphicsState();
+    };
     const encabezado = () => {
       if (gob) doc.addImage(gob, 'JPEG', M + 8, 8, 118, 118 / 3.59, 'gobierno', 'FAST');
-      if (sinfo) doc.addImage(sinfo, 'PNG', (W - 470) / 2, 4, 470, 470 / 6.22, 'sinfo', 'FAST');   // el alias evita repetir la imagen en cada hoja
       doc.setFont('helvetica', 'bold'); doc.setFontSize(21); doc.setTextColor(0);
-      doc.text(titulo, W / 2, 98, {align:'center'});
+      doc.text(titulo, W / 2, 36, {align:'center'});
       doc.setFontSize(11.5);
-      doc.text('Corte Evaluativo:', M + 90, 120, {align:'right'}); doc.setFont('helvetica', 'normal'); doc.text(corteTxt, M + 100, 120);
-      doc.setFont('helvetica', 'bold'); doc.text('Municipio: El Cua          Departamento: Jinotega', W / 2, 120, {align:'center'});
-      doc.text('NER:', W - 330, 120, {align:'right'}); doc.setFont('helvetica', 'normal'); doc.text(nerActual, W - 324, 120, {maxWidth:310});
+      doc.text('Corte Evaluativo:', M + 90, 60, {align:'right'}); doc.setFont('helvetica', 'normal'); doc.text(corteTxt, M + 100, 60);
+      doc.setFont('helvetica', 'bold'); doc.text('Municipio: El Cua          Departamento: Jinotega', W / 2, 60, {align:'center'});
+      doc.text('NER:', W - 330, 60, {align:'right'}); doc.setFont('helvetica', 'normal'); doc.text(nerActual, W - 324, 60, {maxWidth:310});
     };
+    // Orden de cada NER: escuela, luego Educación Inicial → Primaria → Secundaria y de primer grado a undécimo, sección y apellido
+    const sinTilde = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+    const ORD_PROG = ['EDUCACION INICIAL', 'PRIMARIA', 'SECUNDARIA', 'EDUCACION ESPECIAL', 'ALFABETIZACION'];
+    const ORD_NIV = ['PRIMERO', 'SEGUNDO', 'TERCERO', 'CUARTO', 'QUINTO', 'SEXTO', 'I CICLO', 'II CICLO', 'III CICLO', 'SEPTIMO', 'OCTAVO', 'NOVENO', 'DECIMO', 'UNDECIMO', 'GRUPO A', 'GRUPO B', '1ERO', '1RO', '2DO', '3ERO', '3RO'];
+    const pos = (lista, v) => { const i = lista.indexOf(sinTilde(v)); return i < 0 ? 99 : i; };
+    const ordenar = (a, b) => a.centro.localeCompare(b.centro, 'es') || pos(ORD_PROG, a.programa) - pos(ORD_PROG, b.programa) || pos(ORD_NIV, a.nivel) - pos(ORD_NIV, b.nivel)
+      || a.modalidad.localeCompare(b.modalidad, 'es') || a.seccion.localeCompare(b.seccion, 'es') || a.a1.localeCompare(b.a1, 'es') || a.n1.localeCompare(b.n1, 'es');
     const porNer = new Map();
     r.filas.forEach(f => { const n = f.nucleo || 'SIN NER'; if (!porNer.has(n)) porNer.set(n, []); porNer.get(n).push(f); });
     let primero = true;
@@ -530,11 +564,11 @@ async function descargarPDF(){
       if (!primero) doc.addPage(); primero = false;
       nerActual = ner;
       doc.autoTable({
-        head:[cols.map(c => c[0])], body:filas.map((f, i) => cols.map(c => String(c[2](f, i + 1, corteTxt) ?? ''))),
+        head:[cols.map(c => c[0])], body:filas.slice().sort(ordenar).map((f, i) => cols.map(c => String(c[2](f, i + 1, corteTxt) ?? ''))),
         startY:TOP, margin:{top:TOP, left:M, right:M, bottom:BAJO}, tableWidth:W - 2 * M, theme:'grid', columnStyles:estilos, rowPageBreak:'avoid',
-        styles:{font:'helvetica', fontSize:6.3, cellPadding:{top:2, bottom:2, left:2, right:2}, halign:'center', valign:'middle', lineColor:[0, 0, 0], lineWidth:.4, textColor:0, overflow:'linebreak', minCellHeight:25},
+        styles:{font:'helvetica', fontSize:6.3, fillColor:false, cellPadding:{top:2, bottom:2, left:2, right:2}, halign:'center', valign:'middle', lineColor:[0, 0, 0], lineWidth:.4, textColor:0, overflow:'linebreak', minCellHeight:25},
         headStyles:{fillColor:[217, 225, 242], textColor:0, fontStyle:'bold', fontSize:6.6, lineWidth:.5, minCellHeight:30},
-        didDrawPage: encabezado
+        willDrawPage: marcaDeAgua, didDrawPage: encabezado
       });
     }
     const n = doc.getNumberOfPages();
