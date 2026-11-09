@@ -495,15 +495,15 @@ const COL_RETIROS = [
   ['Secc', 4.5, f => f.seccion], ['Turno', 11.5, f => f.turno], ['Cod Único Per', 20, f => f.cp, 'codigo'], ['Primer Nombre', 11.5, f => f.n1],
   ['Segundo Nombre', 11.5, f => f.n2], ['Primer Apellido', 11.5, f => f.a1], ['Segundo Apellido', 11.5, f => f.a2], ['Dirección Alumno', 24, f => f.direccion],
   ['Nombre Responsable', 20, f => f.responsable], ['Cédula Responsable', 16.5, f => f.cedula], ['Fecha de entrega', 11, f => f.entrega],
-  ['Fecha de Retiro', 10.5, f => f.fechaRetiro], ['Causa del Retiro', 13.5, f => f.causa], ['NER', 10, f => f.nucleo], ['CORTE', 11, (f, i, c) => c]
-];
+  ['Fecha de Retiro', 10.5, f => f.fechaRetiro], ['Causa del Retiro', 13.5, f => f.causa]
+];   // NER y corte ya van en el encabezado de cada hoja
 const COL_REPROBADOS = [
   ['No', 4, (f, i) => i], ['CodUnico', 7, f => f.codEst], ['CodCentro', 7, f => f.codCentro], ['Centro Educativo', 24, f => f.centro],
   ['Nivel educativo', 10, f => f.programa], ['Modalidad', 14, f => f.modalidad], ['Nivel_grado', 8.5, f => f.nivel], ['Sección', 5, f => f.seccion],
   ['Turno', 11.5, f => f.turno], ['Cod Único Per', 20, f => f.cp, 'codigo'], ['Primer Nombre', 11.5, f => f.n1], ['Segundo Nombre', 11.5, f => f.n2],
   ['Primer Apellido', 11.5, f => f.a1], ['Segundo Apellido', 11.5, f => f.a2], ['Dirección Estudiante', 24, f => f.direccion], ['Nombre Responsable', 20, f => f.responsable],
   ['Cédula Responsable', 16.5, f => f.cedula], ['Fecha de entrega', 11, f => f.entrega], ['Reprobado1_2_3omásAsig', 10, f => f.cant],
-  ['CLASE. REPR', 28, f => f.clases], ['CORTE', 11, (f, i, c) => c]
+  ['CLASE. REPR', 28, f => f.clases]
 ];
 let _pdf = null;
 function cargarScript(src){ return new Promise((ok, fail) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => fail(new Error('No se pudo cargar el generador de PDF. Revise su conexión.')); document.head.appendChild(s); }); }
@@ -529,7 +529,7 @@ async function descargarPDF(){
     const ret = tipoReporte === 'Retiros', cols = ret ? COL_RETIROS : COL_REPROBADOS, corteTxt = r.corte + ' CORTE';
     const titulo = ret ? `Estudiantes con Retiro de matrícula ${r.anio}` : 'Estudiantes Reprobados en 1, 2, 3 o más asignaturas';
     const doc = new window.jspdf.jsPDF({orientation:'landscape', unit:'pt', format:'legal'});   // 14 x 8.5 pulgadas, como la hoja oficial
-    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 10, TOP = 74, BAJO = 46;
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 28, TOP = 74, BAJO = 46;
     const k = (W - 2 * M) / cols.reduce((a, c) => a + c[1], 0);
     const estilos = {}; cols.forEach((c, i) => { estilos[i] = {cellWidth:c[1] * k}; if (c[3] === 'codigo') estilos[i] = Object.assign(estilos[i], {fontStyle:'bold', fontSize:9}); });
 
@@ -537,7 +537,7 @@ async function descargarPDF(){
     const marcaDeAgua = () => {   // logo de estadística al centro de la hoja, tenue y detrás de la tabla
       if (!sinfo) return;
       const ancho = 760, alto = ancho / 6.22;
-      doc.saveGraphicsState(); doc.setGState(new doc.GState({opacity:.10}));
+      doc.saveGraphicsState(); doc.setGState(new doc.GState({opacity:.25}));
       doc.addImage(sinfo, 'PNG', (W - ancho) / 2, (H - alto) / 2, ancho, alto, 'sinfo', 'FAST');   // el alias evita repetir la imagen en cada hoja
       doc.restoreGraphicsState();
     };
