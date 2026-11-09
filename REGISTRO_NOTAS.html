@@ -120,10 +120,10 @@
   .form-agregar{margin-top:12px; border:1px solid var(--border); border-radius:12px; padding:18px; background:var(--head);}
   .form-agregar .grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));}
   /* Herramientas del panel (permisos, claves, matrícula, listas y notas del grupo): se abren en una ventana encima, una a la vez */
-  #matriculaCard, #clavesCard, #permisosCard, #agregadosCard, #retiradosCard, #detalleCard{position:fixed; z-index:50; left:50%; top:50%; transform:translate(-50%,-50%);
+  #matriculaCard, #reportesCard, #clavesCard, #permisosCard, #agregadosCard, #retiradosCard, #detalleCard{position:fixed; z-index:50; left:50%; top:50%; transform:translate(-50%,-50%);
     width:min(1040px, calc(100vw - 24px)); max-height:calc(100vh - 32px); overflow:auto; margin:0; padding-top:30px; box-shadow:var(--sombra-lg); overscroll-behavior:contain;}
-  #matriculaCard .card-h, #clavesCard .card-h, #permisosCard .card-h, #agregadosCard .card-h, #retiradosCard .card-h, #detalleCard .card-h{margin-top:0;}
-  #matriculaCard, #clavesCard, #permisosCard{width:min(780px, calc(100vw - 24px));}
+  #matriculaCard .card-h, #reportesCard .card-h, #clavesCard .card-h, #permisosCard .card-h, #agregadosCard .card-h, #retiradosCard .card-h, #detalleCard .card-h{margin-top:0;}
+  #matriculaCard, #reportesCard, #clavesCard, #permisosCard{width:min(780px, calc(100vw - 24px));}
     #btnCerrarMatricula, #btnCerrarClaves, #btnCerrarPermisos, #btnCerrarAg, #btnCerrarRet{display:none;}
   #fondoModal{position:fixed; inset:0; z-index:40; background:rgba(6,18,14,.58); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);}
   .modal-barra{position:sticky; top:-30px; z-index:3; display:flex; justify-content:space-between; align-items:center; gap:8px; margin:-30px -26px 14px; padding:12px 26px;
@@ -131,7 +131,7 @@
   .modal-barra .btn{min-height:38px; padding:6px 14px; font-size:.92rem;}
   .modal-barra .cerrar-x{width:38px; height:38px; padding:0; border-radius:50%; font-size:1rem; line-height:1;}
   @media (max-width:640px){
-    #matriculaCard, #clavesCard, #permisosCard, #agregadosCard, #retiradosCard, #detalleCard{left:0; top:auto; bottom:0; transform:none; width:100%; max-height:92vh; border-radius:18px 18px 0 0; padding:24px 16px calc(16px + env(safe-area-inset-bottom,0px));}
+    #matriculaCard, #reportesCard, #clavesCard, #permisosCard, #agregadosCard, #retiradosCard, #detalleCard{left:0; top:auto; bottom:0; transform:none; width:100%; max-height:92vh; border-radius:18px 18px 0 0; padding:24px 16px calc(16px + env(safe-area-inset-bottom,0px));}
     .modal-barra{top:-24px; margin:-24px -16px 12px; padding:10px 16px;}
   }
   @media (max-width:640px){ nav.tabs .wrap{gap:4px; padding:6px 8px;} .tab{flex:1; padding:5px 8px; border-radius:14px; font-size:.88rem; line-height:1.2; min-height:40px;} }
@@ -290,6 +290,7 @@
         <div class="card-h">
           <div><h2 id="panelTitulo">Avance de digitación</h2><p class="sub" id="panelSub"></p></div>
           <div class="fila">
+            <button class="btn sec sm" id="btnReportes">Retiros y reprobados</button>
             <button class="btn sec sm" id="btnPermisos" hidden>Periodo y permisos</button>
             <button class="btn sec sm" id="btnMatricula" hidden>Cargar matrícula</button>
             <button class="btn sec sm" id="btnClaves" hidden>Claves de los NER</button>
@@ -371,6 +372,23 @@
         <div class="fila" style="margin-top:12px"><button class="btn" id="btnSubirMatricula" hidden>Cargar a la base de datos</button></div>
       </div>
 
+      <div class="card" id="reportesCard" hidden>
+        <div class="card-h">
+          <div><h2>Retiros y reprobados</h2><p class="sub">PDF en el formato oficial, listo para imprimir. Cada director ve y descarga solo los de su núcleo; el administrador, los de todos.</p></div>
+        </div>
+        <div class="grid">
+          <div><label for="rTipo">Reporte</label><select id="rTipo"><option value="Retiros">Retiros</option><option value="Reprobados">Reprobados</option></select></div>
+          <div><label for="rNer">Núcleo</label><select id="rNer"></select></div>
+          <div><label for="rCorte">Corte</label><select id="rCorte"><option value="I">I Corte</option><option value="II">II Corte</option><option value="III">III Corte</option><option value="IV">IV Corte</option></select></div>
+          <div><label for="rAnio">Año</label><select id="rAnio"><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option></select></div>
+        </div>
+        <label class="check" style="margin-top:14px"><input type="checkbox" id="rImprimir"> Enviar a imprimir al descargar</label>
+        <div class="fila" style="margin-top:12px"><button class="btn" id="btnReportePdf">Descargar PDF</button><button class="btn sec" id="btnReporteVer">Ver en pantalla</button></div>
+        <details class="muted" style="margin-top:10px"><summary>¿Quiere que salga directo a la impresora, sin la ventana de impresión?</summary><p style="margin:8px 0 0">Por seguridad, el navegador siempre muestra la ventana de impresión (basta con presionar Enter). Para que imprima solo en la impresora predeterminada de esta computadora: clic derecho en el acceso directo de Chrome, Brave o Edge → Propiedades → en «Destino» escriba un espacio y <b>--kiosk-printing</b> al final → Aceptar. Cierre el navegador por completo y ábralo con ese acceso directo.</p></details>
+        <div id="reporteMsg"></div>
+        <div id="reporteLista"></div>
+      </div>
+
       <div class="card" id="clavesCard" hidden>
         <div class="card-h">
           <div><h2>Claves de los NER</h2><p class="sub">Cada NER tiene una sola clave: la usan sus docentes para digitar notas y su director para ver el avance. Al cambiarla, las dos entradas usan la nueva (puede tardar hasta 30 segundos). Entre 4 y 20 letras o números, sin espacios.</p></div>
@@ -391,6 +409,7 @@
   </section>
 </main>
 
+<script src="reporte_pdf.js"></script>
 <script>
 (function(){
 'use strict';
@@ -1662,7 +1681,7 @@ el('btnSubirMatricula').addEventListener('click', async e => {
 });
 
 // ---- Ventanas del panel: una sola abierta a la vez, con fondo, botón ✕, clic afuera y Escape ----
-const MODALES = ['matriculaCard', 'clavesCard', 'permisosCard', 'agregadosCard', 'retiradosCard', 'detalleCard'];
+const MODALES = ['matriculaCard', 'reportesCard', 'clavesCard', 'permisosCard', 'agregadosCard', 'retiradosCard', 'detalleCard'];
 const pila = [];   // ventanas por las que se pasó, para el botón Volver
 function cerrarModales(){ pila.length = 0; MODALES.forEach(id => el(id).hidden = true); }
 MODALES.forEach(id => {
@@ -1692,6 +1711,43 @@ MODALES.forEach(id => {
 });
 el('fondoModal').addEventListener('click', cerrarModales);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModales(); });
+
+// ============================================================
+//  RETIROS Y REPROBADOS (PDF oficial): el director solo los de su núcleo; el administrador, todos
+// ============================================================
+function abrirReportes(){
+  const nucleos = [...new Set(Object.values(R.centros).map(c => c.u))].sort();
+  setOptions(el('rNer'), nucleos.map(n => ({value:n, label:n})), nucleos.length === 1 ? null : 'Todos los núcleos');
+  el('rCorte').value = R.corte; el('rAnio').value = R.anio;
+  el('rImprimir').checked = LS.get('rdc_imprimir') !== false;
+  el('reporteMsg').innerHTML = ''; el('reporteLista').innerHTML = '';
+  el('reportesCard').hidden = false;
+}
+const paramsReporte = () => Object.assign(cred(), {tipo:el('rTipo').value, corte:el('rCorte').value, anio:el('rAnio').value, nucleo:el('rNer').value});
+el('btnReportes').addEventListener('click', abrirReportes);
+el('btnReportePdf').addEventListener('click', async e => {
+  const b = e.currentTarget, texto = b.textContent, imprimir = el('rImprimir').checked, p = paramsReporte(), msg = el('reporteMsg');
+  b.disabled = true; b.textContent = 'Preparando el PDF…'; msg.innerHTML = '';
+  try{
+    const r = await api('fImprimir', p);
+    if (!r.filas.length){ msg.innerHTML = '<div class="msg warn">No hay registros con estos filtros.</div>'; return; }
+    LS.set('rdc_imprimir', imprimir);
+    await ReportePDF.generar({tipo:p.tipo, r, quien:p.nucleo || 'todos los NER', imprimir});
+    msg.innerHTML = `<div class="msg ok">${imprimir ? 'PDF descargado y enviado a imprimir. Elija la impresora en la ventana que se abre.' : 'PDF descargado.'}</div>`;
+  }catch(err){ msg.innerHTML = `<div class="msg err">${esc(err.message)}</div>`; }
+  finally{ b.disabled = false; b.textContent = texto; }
+});
+el('btnReporteVer').addEventListener('click', async () => {
+  const p = paramsReporte(), ret = p.tipo === 'Retiros', cont = el('reporteLista');
+  cont.innerHTML = `<p class="empty">${spin('Buscando…')}</p>`;
+  try{
+    const r = await api('fReporte', p);
+    if (!r.lista.length){ cont.innerHTML = '<p class="empty">No hay registros con estos filtros.</p>'; return; }
+    cont.innerHTML = `<div class="lista"><table><thead><tr><th>Núcleo</th><th>Escuela</th><th>Código</th><th>Estudiante</th><th>${ret ? 'Fecha' : 'Cant.'}</th><th>${ret ? 'Causa' : 'Asignaturas'}</th></tr></thead><tbody>` +
+      r.lista.map(x => `<tr><td>${esc(x.nucleo)}</td><td>${esc(x.escuela)}</td><td>${esc(x.cp)}</td><td>${esc(x.nombre)}</td><td>${esc(ret ? x.fecha : x.cant)}</td><td>${esc(x.detalle || '-')}</td></tr>`).join('') +
+      `</tbody></table></div><p class="muted">${r.lista.length} registro${r.lista.length === 1 ? '' : 's'}</p>`;
+  }catch(err){ cont.innerHTML = `<p class="empty" style="color:var(--danger)">${esc(err.message)}</p>`; }
+});
 
 // ============================================================
 //  EXPORTACIONES
